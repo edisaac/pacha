@@ -1,0 +1,25 @@
+{{ define "stats_cards" }}
+<div id="card-total" {{ if .IsPolling }}hx-swap-oob="true"{{ end }} class="card-stat bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30">
+  <p class="text-xs font-medium text-gray-500 uppercase">Total de Sesiones</p>
+  <p class="mt-1 text-2xl font-bold text-gray-900">{{ if .Stats }}{{ .Stats.TotalLessons }}{{ else }}0{{ end }}</p>
+</div>
+<div id="card-assigned" {{ if .IsPolling }}hx-swap-oob="true"{{ end }} class="card-stat bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30">
+  <p class="text-xs font-medium text-gray-500 uppercase">Sesiones Asignadas</p>
+  <p class="mt-1 text-2xl font-bold text-indigo-600">{{ if .Stats }}{{ .Stats.AssignedLessons }}{{ else }}0{{ end }}</p>
+</div>
+<div id="card-unassigned" {{ if .IsPolling }}hx-swap-oob="true"{{ end }} class="card-stat bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30">
+  <p class="text-xs font-medium text-gray-500 uppercase">Sesiones Sin Asignar</p>
+  <p class="mt-1 text-2xl font-bold text-gray-400">{{ if .Stats }}{{ .Stats.UnassignedLessons }}{{ else }}0{{ end }}</p>
+</div>
+<div id="card-conflicts" {{ if .IsPolling }}hx-swap-oob="true"{{ end }} class="card-stat bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30">
+  <p class="text-xs font-medium text-gray-500 uppercase">Sesiones en Conflicto</p>
+  <p class="mt-1 text-2xl font-bold text-red-500 flex items-center gap-1">
+    <span class="material-symbols-outlined text-[20px]">error</span>
+    {{ if .Stats }}{{ .Stats.ConflictLessons }}{{ else }}0{{ end }}
+  </p>
+</div>
+<div id="card-progress" {{ if .IsPolling }}hx-swap-oob="true"{{ end }} class="card-stat bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30">
+  <p class="text-xs font-medium text-gray-500 uppercase">Progreso</p>
+  <p class="mt-1 text-2xl font-bold text-gray-900">{{ if .Percent }}{{ .Percent }}{{ else }}0{{ end }}%</p>
+</div>
+{{ end }}

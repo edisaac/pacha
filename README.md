@@ -37,3 +37,35 @@ npm --registry=https://registry.npmjs.org exec --yes tailwindcss@3.4.17 -- -c ./
 
 > **Nota:** Al empaquetar la aplicación con `wails-desktop/scripts/build-linux.sh`, la compilación de estilos se ejecuta automáticamente antes del build del backend si dispones de `npm` y `npx` en tu sistema.
 
+
+### 4. Compilación del ejecutable (Desktop) en Linux Local
+
+El pipeline de GitHub Actions se ha configurado para construir únicamente la versión de Windows por razones de soporte corporativo. Sin embargo, puedes compilar el binario para Linux (Ubuntu/Debian) de forma local siguiendo estos pasos:
+
+**1. Instalar dependencias del sistema:**
+Para Ubuntu 24.04+ (WebKit 4.1):
+```bash
+sudo apt-get update
+sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config build-essential
+```
+*(Nota: Para Ubuntu 22.04 o inferiores, instala `libwebkit2gtk-4.0-dev` en lugar de `4.1-dev`)*
+
+**2. Instalar Wails CLI:**
+```bash
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
+**3. Compilar la aplicación:**
+Entra en la carpeta de `wails-desktop` y ejecuta el comando de build. Si estás en Ubuntu 24.04+, debes usar el tag especial para webkit 4.1:
+```bash
+cd wails-desktop
+export PATH=$PATH:$(go env GOPATH)/bin
+
+# Para Ubuntu 24.04+
+wails build -tags webkit2_41 -clean
+
+# Para Ubuntu 22.04-
+wails build -clean
+```
+
+El binario ejecutable final se guardará en la carpeta `wails-desktop/build/bin/`.

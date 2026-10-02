@@ -65,7 +65,7 @@ if (Get-Command wails -ErrorAction SilentlyContinue) {
     wails build -platform windows/amd64 -clean
 } else {
     Write-Host "Wails CLI no encontrado en PATH. Compilando con go build -tags desktop,production..." -ForegroundColor Yellow
-    go build -tags desktop,production -ldflags="-s -w -H windowsgui" -o "$WailsDir\build\bin\HorariosDesktop.exe" .
+    go build -tags desktop,production -ldflags="-s -w -H windowsgui" -o "$WailsDir\build\bin\pacha.exe" .
 }
 New-Item -ItemType Directory -Force -Path "$WailsDir\build\bin\bin" | Out-Null
 Copy-Item "$WailsDir\bin\*" "$WailsDir\build\bin\bin" -Recurse -Force
@@ -91,4 +91,4 @@ if (Test-Path "$WailsDir\bin\jre") {
 }
 
 Write-Host "Empaquetado para Windows completado con exito!" -ForegroundColor Green
-Write-Host "Ejecutable listo en: $WailsDir\build\bin\HorariosDesktop.exe" -ForegroundColor Green
+Write-Host "Ejecutable listo en: $WailsDir\build\bin\pacha.exe" -ForegroundColor Green

@@ -14,16 +14,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [windows-latest]
         include:
-          - os: ubuntu-latest
-            platform: linux/amd64
-            artifact_name: Horarios-Linux-amd64
-            ext: ""
-            build_tags: "-tags webkit2_41"
           - os: windows-latest
             platform: windows/amd64
-            artifact_name: Horarios-Windows-amd64
+            artifact_name: Pacha-Windows-amd64
             ext: ".exe"
             build_tags: ""
         
@@ -61,18 +56,19 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: Build Wails App
-        shell: bash
-        run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
-          wails build -platform ${{ matrix.platform }} ${{ matrix.build_tags }} -clean
-        working-directory: ./wails-desktop
+      - name: Run Windows Build Script
+        shell: pwsh
+        run: .\build-windows.ps1
+
+      - name: Create ZIP Archive
+        shell: pwsh
+        run: Compress-Archive -Path "wails-desktop\build\bin\*" -DestinationPath "Pacha-Windows.zip" -Force
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ./wails-desktop/build/bin/*${{ matrix.ext }}
+          path: Pacha-Windows.zip
 
   release:
     name: Publish Release
