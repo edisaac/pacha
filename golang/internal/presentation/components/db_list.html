@@ -1,0 +1,99 @@
+{{ define "db_list" }}
+<div id="db-list-container" hx-get="/dbs" hx-trigger="every 5s" hx-swap="outerHTML" class="flex flex-col gap-md w-full">
+    {{ if .Databases }}
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-md pb-xs border-b border-outline-variant/20 mb-md mt-md">
+        <div class="flex items-center gap-sm">
+            <div class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-primary shadow-sm">
+                <span class="material-symbols-outlined text-[20px]">folder_open</span>
+            </div>
+            <div class="flex items-center gap-xs font-headline-md text-headline-sm text-on-surface">
+                <span class="text-on-surface-variant font-normal">Espacio de Trabajo</span>
+                <span class="text-outline-variant">/</span>
+                <span class="ml-sm text-label-sm font-mono bg-surface-container-high text-secondary px-sm py-xs rounded-full border border-outline-variant/30">{{ len .Databases }} dataset(s)</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/30 shadow-sm w-full">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-surface-container border-b border-outline-variant/30">
+                    <th class="p-md text-label-md text-on-surface-variant font-semibold">
+                        <span class="inline-flex items-center gap-xs">Planning Dataset</span>
+                    </th>
+                    <!-- TODO: Grabar métricas avanzadas (Lecciones, Asignación, Conflictos) en BD y restaurar estas columnas -->
+                    <th class="p-md text-label-md text-on-surface-variant font-semibold">
+                        <span class="inline-flex items-center gap-xs">Estado</span>
+                    </th>
+                    <th class="p-md text-label-md text-on-surface-variant font-semibold">
+                        <span class="inline-flex items-center gap-xs text-primary">Última Modificación <span class="material-symbols-outlined text-[16px] text-primary">arrow_downward</span></span>
+                    </th>
+                    <th class="p-md text-label-md text-on-surface-variant font-semibold text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Databases }}
+                <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors group" id="db-item-{{ .Name }}">
+                    <td class="p-md">
+                        <div class="flex items-center gap-md">
+                            <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                                <span class="material-symbols-outlined text-[20px]">table_chart</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-body-sm font-semibold text-on-surface group-hover:text-primary transition-colors break-all" title="{{ .Name }}">{{ .Name }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-md">
+                        {{ if eq .Status "COMPLETED" }}
+                            <span class="inline-flex items-center gap-xs bg-emerald-100 text-emerald-700 px-sm py-xs rounded-full text-label-sm border border-emerald-200 font-medium">
+                                <span class="material-symbols-outlined text-[14px]">check_circle</span> COMPLETED
+                            </span>
+                        {{ else if eq .Status "RUNNING" }}
+                            <span class="inline-flex items-center gap-xs bg-blue-100 text-blue-700 px-sm py-xs rounded-full text-label-sm border border-blue-200 font-medium">
+                                <span class="material-symbols-outlined text-[14px] spinner">sync</span> RUNNING
+                            </span>
+                        {{ else if eq .Status "NEW" }}
+                            <span class="inline-flex items-center gap-xs bg-amber-100 text-amber-700 px-sm py-xs rounded-full text-label-sm border border-amber-200 font-medium">
+                                <span class="material-symbols-outlined text-[14px]">schedule</span> NEW
+                            </span>
+                        {{ else if eq .Status "STOPPED" }}
+                            <span class="inline-flex items-center gap-xs bg-indigo-100 text-indigo-700 px-sm py-xs rounded-full text-label-sm border border-indigo-200 font-medium">
+                                <span class="material-symbols-outlined text-[14px]">stop_circle</span> STOPPED
+                            </span>
+                        {{ else if eq .Status "ERROR" }}
+                            <span class="inline-flex items-center gap-xs bg-red-100 text-red-700 px-sm py-xs rounded-full text-label-sm border border-red-200 font-medium">
+                                <span class="material-symbols-outlined text-[14px]">error</span> ERROR
+                            </span>
+                        {{ else }}
+                            <span class="inline-flex items-center gap-xs bg-gray-100 text-gray-700 px-sm py-xs rounded-full text-label-sm border border-gray-200 font-medium">
+                                <span class="material-symbols-outlined text-[14px]">help</span> {{ .Status }}
+                            </span>
+                        {{ end }}
+                    </td>
+                    <td class="p-md text-label-sm font-mono text-on-surface-variant">
+                        {{ if .LastModified }}{{ .LastModified }}{{ else }}N/A{{ end }}
+                    </td>
+                    <td class="p-md text-right">
+                        <div class="inline-flex items-center gap-xs justify-end">
+                            <button hx-get="/planing/{{ .Name }}" hx-target="#content-area" hx-swap="innerHTML" hx-push-url="true" class="inline-flex items-center gap-xs bg-primary-container text-on-primary-container hover:bg-primary px-sm py-xs rounded-lg text-label-sm font-semibold transition-all shadow-sm">
+                                <span class="material-symbols-outlined text-[16px]">folder_open</span>
+                                <span>Abrir</span>
+                            </button>
+                            {{ if not (eq .Status "RUNNING") }}
+                            <button hx-delete="/delete/{{ .Name }}" hx-confirm="¿Estás seguro de eliminar permanentemente este archivo?" hx-target="#db-item-{{ .Name }}" hx-swap="outerHTML" class="inline-flex items-center gap-xs text-error hover:bg-error/10 px-sm py-xs rounded-lg text-label-sm font-medium transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">delete</span>
+                                <span>Eliminar</span>
+                            </button>
+                            {{ end }}
+                        </div>
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+    {{ end }}
+</div>
+{{ end }}

@@ -1,0 +1,24 @@
+<div class="modal-overlay" aria-labelledby="modal-title" role="dialog" aria-modal="true" id="modal-container">
+    <div class="modal-content" @click.away="document.getElementById('modal-container').remove()">
+        <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+            <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-container').remove()">
+                <span class="sr-only">Close</span>
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="sm:flex sm:items-start">
+            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                <h3 class="text-lg font-semibold leading-6 text-gray-900" id="modal-title">Detalles: {{ .EntityTitle }}</h3>
+                <div class="mt-4 overflow-auto max-h-[60vh] ring-1 ring-gray-300 sm:rounded-lg">
+                    {{ template "entity_table" . }}
+                </div>
+            </div>
+        </div>
+        <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+            <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-colors" onclick="document.getElementById('modal-container').remove()">Cerrar</button>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,74 @@
+{{ define "ocupabilidad_grid" }}
+<div class="animate-fade-in">
+  {{ if not .TimeGroups }}
+  <div class="mt-4 rounded-xl border-2 border-dashed border-gray-200 py-12 text-center text-sm text-gray-400">
+    No hay sesiones asignadas todavía.
+  </div>
+  {{ else }}
+  <div class="overflow-x-auto rounded-xl ring-1 ring-gray-200 mt-2">
+    <!--Leyenda-->
+    Leyenda :
+    <div class="badge-ocupabilidad">
+      <span class="text-base font-black text-indigo-600">#Sesiones Asignadas</span>
+      <span class="text-[11px] font-bold text-gray-400">% Ocupabilidad</span>
+    </div>
+    <div class="badge-ocupabilidad-red">
+      <span class="text-base font-black text-red-600 "> #Conflictos</span>
+    </div>
+    <table class="table-grid">
+      <thead class="table-grid-header">
+        <tr>
+          <th class="table-grid-th-left">
+            Hora</th>
+          {{ range .Days }}
+          <th class="table-grid-th-center">{{ .Name }}
+          </th>
+          {{ end }}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {{ range .TimeGroups }}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="table-grid-td-time">
+            {{ .TimeRange }}
+          </td>
+          {{ $tg := . }}
+          {{ range $.Days }}
+          {{ $lessons := index $tg.Days .DayOfWeek }}
+          {{ $count := len $lessons }}
+          {{ $conflicts := countConflicts $lessons }}
+          {{ $pct := computePct $count $.Stats.TotalRooms }}
+          {{ $tsID := index $tg.TimeslotIDs .DayOfWeek }}
+          <td class="table-grid-td-center cursor-pointer {{ if gt $count 0 }}bg-indigo-50/20 hover:bg-indigo-50/40{{ else }}bg-white hover:bg-gray-50/50{{ end }}"
+              hx-get="/planing/{{ $.TaskID }}/schedule/interval/{{ $tsID }}"
+              hx-target="#interval-schedule-target"
+              hx-swap="innerHTML"
+              @click="
+                intervalTab = 'schedule';
+                if(document.getElementById('calendar-active-interval-name')) {
+                    document.getElementById('calendar-active-interval-name').innerText = '{{ .Name }} {{ $tg.TimeRange }}';
+                }
+              ">
+            {{ if gt $count 0 }}
+            <div class="badge-ocupabilidad" title="{{ $count }} sesiones de {{ $.Stats.TotalRooms }} aulas">
+              <span class="text-base font-black text-indigo-600">{{ $count }}</span>
+              <span class="text-[11px] font-bold text-gray-400">{{ $pct }}%</span>
+              {{ if gt $conflicts 0 }}
+              <span class="badge-ocupabilidad-conflict"
+                title="{{ $conflicts }} conflicto(s) en este intervalo">{{ $conflicts }}</span>
+              {{ end }}
+            </div>
+            {{ else }}
+            <span class="badge-ocupabilidad-empty"
+              title="0 sesiones">0</span>
+            {{ end }}
+          </td>
+          {{ end }}
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

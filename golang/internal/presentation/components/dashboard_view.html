@@ -1,0 +1,173 @@
+{{ define "dashboard_view" }}
+{{ template "left_sidebar" . }}
+
+<!-- Main Content (With Sidebar Offset) -->
+<main hx-ext="sse" sse-connect="/api/task/{{ .TaskID }}/stream"
+      :class="isCollapsed ? 'md:ml-20' : 'md:ml-[280px]'" class="flex-1 p-margin-mobile md:p-margin-desktop pb-28 overflow-x-hidden min-h-screen transition-all duration-300 ease-in-out w-full">
+
+<script>
+  if (!window.sseListenerAttached) {
+      window.sseListenerAttached = true;
+      window.refreshInProgress = false;
+
+      document.addEventListener('htmx:sseOpen', function(e) {
+          var es = e.detail.source;
+          
+          es.addEventListener('telemetry', function(e) {
+              let telemetryData = null;
+              try { telemetryData = JSON.parse(e.data); } catch (err) {}
+              // Despachar evento simple con los datos para que Alpine.js los procese rápido
+              window.dispatchEvent(new CustomEvent('telemetry_update', {detail: telemetryData}));
+              
+              if (telemetryData && telemetryData.status !== 'STATS_UPDATE') {
+                  if (window.Alpine) {
+                      let finalStatus = telemetryData.status === 'NEW_BEST_SOLUTION' ? 'RUNNING' : telemetryData.status;
+                      Alpine.store('task').status = finalStatus;
+                  }
+                  window.dispatchEvent(new CustomEvent('update-status', {detail: telemetryData}));
+              }
+          });
+          
+          es.addEventListener('solverdone', function() {
+              document.body.dispatchEvent(new Event('solverdone', {bubbles: true}));
+              window.dispatchEvent(new Event('solverdone'));
+          });
+      });
+  }
+</script>
+
+<script>
+    // Inicializar el store global de Alpine
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('task', {
+            status: '{{ .Status }}',
+            get isEditable() {
+                return this.status === 'NEW';
+            },
+            get isRunning() {
+                return this.status === 'RUNNING';
+            },
+            get isFinished() {
+                return ['COMPLETED', 'STOPPED', 'ERROR'].includes(this.status);
+            }
+        });
+    });
+    // Si Alpine ya estaba inicializado (ej. navegación con HTMX)
+    if (window.Alpine && !Alpine.store('task')) {
+        Alpine.store('task', {
+            status: '{{ .Status }}',
+            get isEditable() { return this.status === 'NEW'; },
+            get isRunning() { return this.status === 'RUNNING'; },
+            get isFinished() { return ['COMPLETED', 'STOPPED', 'ERROR'].includes(this.status); }
+        });
+    } else if (window.Alpine && Alpine.store('task')) {
+        // Asegurarnos que al re-renderizar, el status esté correcto
+        Alpine.store('task').status = '{{ .Status }}';
+    }
+</script>
+
+<!-- Disparador oculto para refrescar las métricas de Resumen vía HTMX -->
+<div hidden hx-get="/status/{{ .TaskID }}" hx-trigger="update-status from:window" hx-swap="none"></div>
+
+  <div class="w-full max-w-7xl mx-auto flex flex-col gap-xl mt-6">
+        <!-- Título del Dataset (H1) -->
+        <div class="mb-2 flex items-center justify-between">
+            <div>
+                <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                    <span class="material-symbols-outlined text-[16px]">folder</span>
+                    <span>Datasets</span>
+                    <span>/</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl font-bold text-gray-900 font-display">Dataset: {{ .TaskID }}</h1>
+                </div>
+            </div>
+            
+            <button @click="$dispatch('open-help-drawer')" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 hover:border-indigo-300 transition-all text-sm font-semibold text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 group">
+                <span class="material-symbols-outlined text-indigo-500 group-hover:scale-110 transition-transform">help</span>
+                <span class="hidden sm:inline">Ayuda / Documentación</span>
+            </button>
+        </div>
+
+        <div class="animate-fade-in w-full h-full">
+
+
+  <div class="pb-6">
+
+    <!-- ── Tab: Resumen ────────────────────────────────── -->
+    <div x-show="activeTab==='resumen'" x-cloak class="mt-4">
+      {{ template "resumen_tab" . }}
+    </div>
+
+    <!-- ── Tab: Restricciones (Soft Constraints) ────────────────────────────────── -->
+    <div x-show="activeTab==='rules'" x-cloak class="mt-4">
+      <div hx-get="/planing/{{ .TaskID }}/rules?status={{ .Status }}" hx-trigger="load" hx-swap="innerHTML">
+        <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando restricciones…</div>
+      </div>
+    </div>
+
+
+    <!-- ── Tab: Bloques Horarios (Listado) ──────────────────────────────────────── -->
+    <div x-show="activeTab==='intervals'" x-cloak class="mt-4">
+      <div hx-get="/planing/{{ .TaskID }}/details/intervals?mode=embed" hx-trigger="load" hx-swap="innerHTML">
+        <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando bloques horarios…</div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Por Aula ──────────────────────────────────────────────────── -->
+    <div x-show="activeTab==='room'" x-cloak class="mt-4">
+      <div hx-get="/planing/{{ .TaskID }}/details/rooms?mode=embed" hx-trigger="load" hx-swap="innerHTML">
+        <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando aulas…</div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Por Docente ─────────────────────────────────────────────── -->
+    <div x-show="activeTab==='teacher'" x-cloak class="mt-4">
+      <div hx-get="/planing/{{ .TaskID }}/details/teachers?mode=embed" hx-trigger="load" hx-swap="innerHTML">
+        <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando docentes…</div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Por Grupo ────────────────────────────────────────────────── -->
+    <div x-show="activeTab==='group'" x-cloak class="mt-4">
+      <div hx-get="/planing/{{ .TaskID }}/details/groups?mode=embed" hx-trigger="load" hx-swap="innerHTML">
+        <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando secciones…</div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Cursos ───────────────────────────────────────────────────── -->
+    <div x-show="activeTab==='subject'" x-cloak class="mt-4">
+      <div hx-get="/planing/{{ .TaskID }}/details/subjects?mode=embed" hx-trigger="load" hx-swap="innerHTML">
+        <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando cursos…</div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Lecciones ────────────────────────────────────────────────── -->
+    <div x-show="activeTab==='lesson'" x-cloak class="mt-4">
+      <div hx-get="/planing/{{ .TaskID }}/details/lessons?mode=embed" hx-trigger="load, refreshgrid from:body" hx-swap="innerHTML">
+        <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando sesiones…</div>
+      </div>
+    </div>
+    
+  </div> <!-- closes pb-6 -->
+  </div> <!-- closes animate-fade-in -->
+  </div> <!-- closes max-w-7xl container -->
+  
+  <!-- Contenedor genérico para modales HTMX -->
+  <div id="modal-container" @closemodal.window="document.getElementById('modal-container').innerHTML = ''"></div>
+</main>
+
+<!-- Out of band swap to update sidebar buttons when dashboard is re-rendered (e.g. after Start/Stop) -->
+<div id="sidebar-action-wrapper">
+     {{ template "floating_toolbar" . }}
+</div>
+
+{{ end }}
+{{ define "polling_response" }}
+<!-- El toolbar ya no se actualiza via HTMX aquí porque es 100% reactivo con Alpine.js -->
+
+
+{{ if .IsPolling }}
+{{ template "stats_cards" dict "Stats" .Stats "Percent" .Percent "IsPolling" true }}
+{{ end }}
+{{ end }}

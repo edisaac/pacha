@@ -1,0 +1,316 @@
+{{ define "rules_config" }}
+<div class="mt-4 bg-white p-6 rounded-xl shadow ring-1 ring-black/5 relative" x-data="{
+    initialRules: [
+        {{ range .Rules }}
+        { id: '{{ .Name }}', weight: {{ .Weight }} },
+        {{ end }}
+    ],
+    rules: [
+        { id: 'studentGroupSubjectVariety', name: 'studentGroupSubjectVariety', weight: 10, enabled: true, label: 'Variedad de Cursos por Sección', description: 'Evita tener la misma materia seguida en el día para una sección.', type: 'normal' },
+        { id: 'teacherRoomStability', name: 'teacherRoomStability', weight: 6, enabled: true, label: 'Estabilidad de Aulas para el Docente', description: 'Intenta que un docente dicte sus clases en la misma aula el mismo día.', type: 'normal' },
+        { id: 'penalizeWeekends', name: 'penalizeWeekends', weight: 4, label: 'Penalizar fines de semana', description: 'Evita asignar sesiones los sábados y domingos.', type: 'weekend' },
+        { id: 'penalizeSunday', name: 'penalizeSunday', weight: 0, label: 'Penalizar solo domingo', description: 'Evita asignar sesiones únicamente los domingos.', type: 'weekend' },
+        { id: 'teacherTimeEfficiency', name: 'teacherTimeEfficiency', weight: 8, label: 'Eficiencia de Tiempo del Docente', description: 'Reduce los huecos libres (ventanas) en el horario de los docentes.', type: 'efficiency' },
+        { id: 'studentTimeEfficiency', name: 'studentTimeEfficiency', weight: 0, label: 'Eficiencia de Tiempo del Estudiante', description: 'Reduce los huecos libres (ventanas) en el horario de los estudiantes.', type: 'efficiency' }
+    ],
+    exclusiveGroups: [
+        {
+            id: 'timeEff',
+            title: 'Eficiencia de Tiempo (Excluyente)',
+            description: 'Selecciona qué entidad tendrá prioridad para minimizar sus horas libres (ventanas).',
+            activeRule: null,
+            enabled: false,
+            options: [
+                { id: 'teacherTimeEfficiency', title: 'Docentes', desc: 'Minimizar huecos libres para docentes.' },
+                { id: 'studentTimeEfficiency', title: 'Estudiantes', desc: 'Minimizar huecos libres para alumnos.' }
+            ]
+        },
+        {
+            id: 'weekendsEff',
+            title: 'Penalización de Fin de Semana (Excluyente)',
+            description: 'Selecciona si deseas penalizar las clases en fin de semana completo o solo los domingos.',
+            activeRule: null,
+            enabled: false,
+            options: [
+                { id: 'penalizeWeekends', title: 'Sábado y Domingo', desc: 'Evitar clases ambos días.' },
+                { id: 'penalizeSunday', title: 'Solo Domingo', desc: 'Evitar clases únicamente el domingo.' }
+            ]
+        }
+    ],
+    saveStatus: 'idle',
+    saveTimeout: null,
+    
+    init() {
+        this.initialRules.forEach(r => {
+            const found = this.rules.find(b => b.id === r.id);
+            if (found) {
+                if (found.type === 'normal') {
+                    if (r.weight > 0) {
+                        found.weight = r.weight;
+                        found.enabled = true;
+                    } else {
+                        found.enabled = false;
+                    }
+                } else {
+                    found.weight = r.weight;
+                }
+            }
+        });
+        
+        // Setup Time Efficiency group
+        const teacherW = this.rules.find(r => r.id === 'teacherTimeEfficiency').weight;
+        const studentW = this.rules.find(r => r.id === 'studentTimeEfficiency').weight;
+        
+        const effGroup = this.exclusiveGroups.find(g => g.id === 'timeEff');
+        if (teacherW > 0) {
+            effGroup.enabled = true;
+            effGroup.activeRule = 'teacherTimeEfficiency';
+        } else if (studentW > 0) {
+            effGroup.enabled = true;
+            effGroup.activeRule = 'studentTimeEfficiency';
+        } else {
+            effGroup.enabled = false;
+            effGroup.activeRule = 'teacherTimeEfficiency';
+        }
+
+        // Setup Weekends group
+        const weekendsW = this.rules.find(r => r.id === 'penalizeWeekends').weight;
+        const sundayW = this.rules.find(r => r.id === 'penalizeSunday').weight;
+        
+        const wkdGroup = this.exclusiveGroups.find(g => g.id === 'weekendsEff');
+        if (weekendsW > 0) {
+            wkdGroup.enabled = true;
+            wkdGroup.activeRule = 'penalizeWeekends';
+        } else if (sundayW > 0) {
+            wkdGroup.enabled = true;
+            wkdGroup.activeRule = 'penalizeSunday';
+        } else {
+            wkdGroup.enabled = false;
+            wkdGroup.activeRule = 'penalizeWeekends';
+        }
+
+        this.$watch('rules', () => this.triggerAutoSave(), { deep: true });
+        this.$watch('exclusiveGroups', () => this.triggerAutoSave(), { deep: true });
+    },
+    
+    getPayload() {
+        return this.rules.map(r => {
+            let finalWeight = Number(r.weight);
+            if (r.type === 'normal' && !r.enabled) {
+                finalWeight = 0;
+            }
+            this.exclusiveGroups.forEach(group => {
+                const isOption = group.options.some(opt => opt.id === r.id);
+                if (isOption) {
+                    if (!group.enabled || group.activeRule !== r.id) {
+                        finalWeight = 0;
+                    }
+                }
+            });
+            return {
+                name: r.name,
+                weight: finalWeight
+            };
+        });
+    },
+    
+    triggerAutoSave() {
+        if (!this.$store.task.isEditable) {
+            return;
+        }
+
+        this.saveStatus = 'saving';
+        window.dispatchEvent(new CustomEvent('saving-rules', { detail: true }));
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(async () => {
+            try {
+                const payload = new URLSearchParams();
+                payload.append('rulesData', JSON.stringify(this.getPayload()));
+                
+                const response = await fetch('/save-rules/{{ .TaskID }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: payload.toString()
+                });
+                
+                if (response.ok) {
+                    this.saveStatus = 'saved';
+                    setTimeout(() => { if (this.saveStatus === 'saved') this.saveStatus = 'idle' }, 2000);
+                } else {
+                    this.saveStatus = 'error';
+                }
+            } catch (e) {
+                this.saveStatus = 'error';
+            } finally {
+                window.dispatchEvent(new CustomEvent('saving-rules', { detail: false }));
+            }
+        }, 600);
+    }
+}">
+
+    <div class="absolute top-6 right-6 flex items-center space-x-2 text-sm font-medium z-10">
+        <template x-if="saveStatus === 'saving'">
+            <span class="text-gray-500 flex items-center bg-white px-2 py-1 rounded shadow-sm border border-gray-100">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Guardando...
+            </span>
+        </template>
+        <template x-if="saveStatus === 'saved'">
+            <span class="text-green-600 flex items-center bg-green-50 px-2 py-1 rounded shadow-sm border border-green-100">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Guardado
+            </span>
+        </template>
+        <template x-if="saveStatus === 'error'">
+            <span class="text-red-600 flex items-center bg-red-50 px-2 py-1 rounded shadow-sm border border-red-100">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                Error
+            </span>
+        </template>
+    </div>
+
+    <div class="mb-4 pr-32">
+        <h3 class="text-lg font-bold text-gray-900">Configuración de Reglas (Soft Constraints)</h3>
+        <p class="text-sm text-gray-500 mt-1">Asigna un peso a cada regla para establecer su prioridad en la optimización.</p>
+        
+        <div x-show="!$store.task.isEditable" x-cloak class="mt-3 bg-amber-50 border-l-4 border-amber-400 p-3 flex items-start transition-all duration-300">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-amber-700 font-medium">Las reglas ya no pueden modificarse (Estado: <span x-text="$store.task.status"></span>).</p>
+            </div>
+        </div>
+    </div>
+
+    <fieldset :disabled="!$store.task.isEditable" 
+              class="border-0 p-0 m-0 min-w-0 transition-all duration-300"
+              :class="!$store.task.isEditable ? 'pointer-events-none opacity-60 grayscale-[0.3] select-none' : ''">
+    <!-- Exclusive Groups -->
+    <template x-for="group in exclusiveGroups" :key="group.id">
+        <div class="mb-6 p-5 bg-white rounded-xl border shadow-sm transition-all duration-300"
+             :class="!group.enabled ? 'border-gray-200 opacity-75 bg-gray-50' : 'border-indigo-100 ring-1 ring-indigo-50'">
+            
+            <div class="flex justify-between items-start mb-4">
+                <div class="pr-4">
+                    <h4 class="text-base font-bold text-gray-900" x-text="group.title"></h4>
+                    <p class="text-sm text-gray-500 mt-1" x-text="group.description"></p>
+                </div>
+                <div class="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                    <span class="text-sm font-medium text-gray-700" x-text="group.enabled ? 'Activado' : 'Desactivado'"></span>
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                            :class="group.enabled ? 'bg-indigo-600' : 'bg-gray-200'"
+                            role="switch" 
+                            :aria-checked="group.enabled.toString()"
+                            @click="if($store.task.isEditable) group.enabled = !group.enabled">
+                        <span aria-hidden="true" 
+                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                              :class="group.enabled ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selected option logic -->
+            <div class="flex overflow-x-auto gap-4 pb-2 snap-x -mx-1 px-1 hide-scrollbar">
+                <template x-for="option in group.options" :key="option.id">
+                    <label class="relative flex-none w-64 flex flex-col p-4 cursor-pointer border rounded-xl transition-all duration-200 snap-center"
+                           :class="[
+                               group.enabled && group.activeRule === option.id 
+                                   ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 shadow-md transform scale-[1.02]' 
+                                   : 'border-gray-200 hover:border-gray-300 bg-white',
+                               !group.enabled ? 'opacity-60 cursor-not-allowed hover:border-gray-200' : ''
+                           ]">
+                        <input type="radio" 
+                               :name="group.id" 
+                               :value="option.id" 
+                               x-model="group.activeRule" 
+                               class="sr-only" 
+                               :disabled="!group.enabled">
+                        <span class="text-sm font-bold mb-1" 
+                              :class="group.enabled && group.activeRule === option.id ? 'text-indigo-900' : 'text-gray-900'" 
+                              x-text="option.title"></span>
+                        <span class="text-xs text-gray-500" x-text="option.desc"></span>
+                        
+                        <!-- Show weight for this option directly inside the card for constant visibility -->
+                        <div class="mt-3 pt-2 border-t flex justify-between items-center"
+                             :class="group.enabled && group.activeRule === option.id ? 'border-indigo-200' : 'border-gray-100'">
+                            <span class="text-[10px] uppercase font-bold text-gray-500">Peso Asignado</span>
+                            <input type="number" 
+                                   :value="group.enabled && group.activeRule === option.id ? rules.find(r => r.id === option.id).weight : 0"
+                                   @input="const r = rules.find(x => x.id === option.id); if(r) r.weight = $event.target.value;"
+                                   min="0" max="1000" 
+                                   :disabled="!group.enabled || group.activeRule !== option.id"
+                                   class="w-16 px-1.5 py-1 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-bold text-gray-900 text-center shadow-inner transition-colors duration-200"
+                                   :class="group.enabled && group.activeRule === option.id ? 'border-indigo-300 bg-white' : 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'">
+                        </div>
+
+                        <div class="absolute top-4 right-4" x-show="group.enabled && group.activeRule === option.id">
+                            <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                    </label>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <div class="space-y-3">
+        <template x-for="rule in rules" :key="rule.id">
+            <div x-show="rule.type === 'normal'" 
+                 class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-md shadow-sm transition-all duration-300"
+                 :class="!rule.enabled ? 'border-gray-200 opacity-60 bg-gray-50' : 'hover:border-indigo-300'">
+                
+                <div class="flex items-center flex-1 pr-4">
+                    <div class="p-2 rounded-lg mr-4" :class="rule.enabled ? 'bg-indigo-50' : 'bg-gray-100'">
+                        <svg class="w-5 h-5" :class="rule.enabled ? 'text-indigo-500' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-800" x-text="rule.label"></p>
+                        <p class="text-xs text-gray-500 mt-0.5" x-text="rule.description"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center bg-gray-50 p-2 rounded-lg border border-gray-200" :class="!rule.enabled ? 'opacity-50' : ''">
+                        <label class="text-xs font-bold text-gray-500 mr-3 uppercase tracking-wider">Peso:</label>
+                        <input type="number" 
+                               :value="rule.enabled ? rule.weight : 0"
+                               @input="rule.weight = $event.target.value"
+                               min="0" max="1000" 
+                               :disabled="!rule.enabled"
+                               class="w-20 px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-bold text-gray-900 text-center shadow-inner disabled:bg-gray-100 disabled:cursor-not-allowed">
+                    </div>
+
+                    <!-- Toggle Button -->
+                    <div class="flex flex-col items-center">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                                :class="rule.enabled ? 'bg-indigo-600' : 'bg-gray-200'"
+                                role="switch" 
+                                :aria-checked="rule.enabled ? 'true' : 'false'"
+                                @click="if($store.task.isEditable) rule.enabled = !rule.enabled">
+                            <span aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                  :class="rule.enabled ? 'translate-x-5' : 'translate-x-0'"></span>
+                        </button>
+                        <span class="text-[10px] uppercase font-bold mt-1" :class="rule.enabled ? 'text-indigo-600' : 'text-gray-500'" x-text="rule.enabled ? 'ON' : 'OFF'"></span>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+    </fieldset>
+</div>
+
+<style>
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
+{{ end }}

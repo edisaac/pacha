@@ -1,0 +1,122 @@
+{{ define "analyze_panel" }}
+<div id="analyze-panel" class="mt-6 overflow-hidden rounded-xl bg-white shadow ring-1 ring-black/5"
+     hx-get="/analyze/{{ .TaskID }}" hx-trigger="solverdone from:body, refreshgrid from:body" hx-swap="outerHTML">
+  <div class="border-b border-gray-200 bg-indigo-600 px-6 py-4 flex items-center justify-between gap-3">
+    
+    <h3 class="text-base font-bold text-white">Análisis de Restricciones</h3>
+
+    <div class="flex items-center gap-2">
+      <div x-data="{ time: new Date().toLocaleTimeString() }" class="inline-flex items-center gap-1.5 rounded-md bg-white/20 px-2 py-1 text-xs font-medium text-white/90 shadow-sm" title="Actualizado a esta hora (Usa el botón Recargar Tablas para forzar actualización)">
+        <svg class="h-3.5 w-3.5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span x-text="'Actualizado: ' + time"></span>
+      </div>
+    </div>
+  </div>
+
+  {{ if not .Constraints }}
+    <div class="px-6 py-10 text-center text-sm text-gray-500">
+      {{ if eq .Status "NEW" }}
+        El horario aún no ha sido procesado. Inicia el solver para ver el análisis.
+      {{ else if eq .Status "RUNNING" }}
+        <div class="flex flex-col items-center gap-3">
+          <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Solver en ejecución. El análisis estará disponible al completar.
+        </div>
+      {{ else }}
+        No hay datos de análisis disponibles.
+        {{ if .TaskID }}
+        <div class="mt-4">
+          <button hx-get="/analyze/{{ .TaskID }}"
+                  hx-target="#analyze-panel"
+                  hx-swap="outerHTML"
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reintentar
+          </button>
+        </div>
+        {{ end }}
+      {{ end }}
+    </div>
+  {{ else }}
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="w-8 px-4 py-3"></th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">Restricción</th>
+            <th class="px-4 py-3 text-center font-semibold text-gray-700">Tipo</th>
+            <th class="px-4 py-3 text-center font-semibold text-gray-700">Violaciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 bg-white">
+          {{ range $i, $c := .Constraints }}
+          <tr class="hover:bg-gray-50 transition-colors"
+              {{ if gt .Matches 0 }}@click="analyzeOpenRows['{{ .Name }}'] = !analyzeOpenRows['{{ .Name }}']" style="cursor:pointer"{{ end }}>
+            <td class="px-4 py-3 text-center">
+              {{ if gt .Matches 0 }}
+                <span class="text-red-500" title="Restricción violada">
+                  <svg class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </span>
+              {{ else }}
+                <span class="text-green-500" title="Restricción cumplida">
+                  <svg class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </span>
+              {{ end }}
+            </td>
+            <td class="px-4 py-3 font-medium text-gray-900">
+              <div class="flex items-center gap-2">
+                {{ if .Label }}{{ .Label }}{{ else }}{{ .Name }}{{ end }}
+                {{ if gt .Matches 0 }}
+                <svg class="h-3.5 w-3.5 text-gray-400 transition-transform" :class="analyzeOpenRows['{{ .Name }}'] ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                </svg>
+                {{ end }}
+              </div>
+            </td>
+            <td class="px-4 py-3 text-center">
+              {{ if eq .Type "hard" }}
+                <span class="badge-hard">HARD</span>
+              {{ else if eq .Type "medium" }}
+                <span class="badge-medium">MEDIUM</span>
+              {{ else }}
+                <span class="badge-soft">SOFT</span>
+              {{ end }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              {{ if gt .Matches 0 }}
+                <span class="font-bold text-red-600">{{ .Matches }}</span>
+              {{ else }}
+                <span class="text-gray-400">0</span>
+              {{ end }}
+            </td>
+          </tr>
+          {{ if gt .Matches 0 }}
+          <tr x-show="analyzeOpenRows['{{ .Name }}']" x-cloak class="bg-red-50">
+            <td></td>
+            <td colspan="4" class="px-4 pb-3 pt-1">
+              <ul class="space-y-1 text-xs text-red-800">
+                {{ range .Violations }}
+                <li class="flex items-start gap-1.5">
+                  <span class="mt-0.5 shrink-0 text-red-400">›</span>
+                  <span>{{ . }}</span>
+                </li>
+                {{ else }}
+                <li class="text-gray-500 italic">No hay descripciones disponibles para esta restricción.</li>
+                {{ end }}
+              </ul>
+            </td>
+          </tr>
+          {{ end }}
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+  {{ end }}
+</div>
+{{ end }}

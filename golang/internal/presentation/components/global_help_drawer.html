@@ -1,0 +1,448 @@
+{{ define "global_help_drawer" }}
+<!-- Alpine Component for Global Help Drawer -->
+<!-- Global event listener to open the drawer: @open-help-drawer.window="isOpen = true" -->
+<div id="global-help-drawer-wrapper" x-data="{ 
+        isOpen: false, 
+        printMode: false,
+        
+        printHelp() {
+            // Add a class to body for printing
+            document.body.classList.add('printing-help');
+            this.printMode = true;
+            
+            // Wait for DOM to update and then print
+            setTimeout(() => {
+                window.print();
+                
+                // Cleanup after printing
+                setTimeout(() => {
+                    document.body.classList.remove('printing-help');
+                    this.printMode = false;
+                }, 100);
+            }, 300);
+        }
+     }" 
+     @open-help-drawer.window="isOpen = true"
+     @keydown.escape.window="isOpen = false"
+     x-cloak
+     class="relative z-[100]" 
+     aria-labelledby="slide-over-title" 
+     role="dialog" 
+     aria-modal="true">
+
+  <!-- Print Styles -->
+  <style>
+    @media print {
+        /* Ocultar todo el contenido del body excepto el componente de ayuda */
+        body.printing-help > *:not(#global-help-drawer-wrapper) {
+            display: none !important;
+        }
+        
+        /* Asegurarse que todos los contenedores padres sean estáticos para permitir scroll de múltiples páginas */
+        body.printing-help .print-static-wrapper,
+        body.printing-help .print-static-wrapper > div,
+        body.printing-help .print-static-wrapper > div > div,
+        body.printing-help .print-static-wrapper > div > div > div {
+            position: static !important;
+            transform: none !important;
+            overflow: visible !important;
+            height: auto !important;
+            max-width: 100% !important;
+            display: block !important;
+        }
+
+        body.printing-help #global-help-content {
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        /* Force all accordions to expand in print mode */
+        body.printing-help .help-accordion-content {
+            display: block !important;
+        }
+        
+        body.printing-help .help-print-hide {
+            display: none !important;
+        }
+        
+        @page {
+            margin: 1.5cm;
+        }
+    }
+  </style>
+
+  <!-- Background overlay -->
+  <div x-show="isOpen" 
+       x-transition:enter="ease-in-out duration-500" 
+       x-transition:enter-start="opacity-0" 
+       x-transition:enter-end="opacity-100" 
+       x-transition:leave="ease-in-out duration-500" 
+       x-transition:leave-start="opacity-100" 
+       x-transition:leave-end="opacity-0" 
+       class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity help-print-hide" 
+       @click="isOpen = false"></div>
+
+  <div class="fixed inset-0 overflow-hidden pointer-events-none print-static-wrapper">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+        
+        <!-- Slide-over panel -->
+        <div x-show="isOpen || printMode" 
+             x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700" 
+             x-transition:enter-start="translate-x-full" 
+             x-transition:enter-end="translate-x-0" 
+             x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700" 
+             x-transition:leave-start="translate-x-0" 
+             x-transition:leave-end="translate-x-full" 
+             class="pointer-events-auto relative w-screen max-w-md">
+          
+          <div class="flex h-full flex-col bg-white shadow-xl" id="global-help-content">
+            
+            <!-- Header -->
+            <div class="px-4 py-6 sm:px-6 bg-indigo-600 text-white flex items-center justify-between help-print-hide">
+              <h2 class="text-xl font-bold flex items-center gap-2" id="slide-over-title">
+                <span class="material-symbols-outlined">menu_book</span>
+                Documentación y Ayuda
+              </h2>
+              <div class="flex h-7 items-center gap-3">
+                <button @click="printHelp()" type="button" class="rounded-md text-indigo-200 hover:text-white focus:outline-none transition-colors flex items-center" title="Imprimir PDF">
+                  <span class="material-symbols-outlined">print</span>
+                </button>
+                <button type="button" @click="isOpen = false" class="rounded-md text-indigo-200 hover:text-white focus:outline-none transition-colors flex items-center" title="Cerrar">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Print Header (Only visible when printing) -->
+            <div class="hidden print:block mb-8 border-b pb-4">
+                <h1 class="text-3xl font-bold text-gray-900">Documentación de Horarios</h1>
+                <p class="text-gray-500 mt-2">Guía de referencia para íconos, estados y conceptos clave.</p>
+            </div>
+
+            <!-- Content Area (Scrollable) -->
+            <div class="relative flex-1 px-4 py-6 sm:px-6 overflow-y-auto">
+                
+                <div class="space-y-4">
+                    
+                    <!-- Accordion 1: Estados del Solver -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm" x-data="{ expanded: false }">
+                        <button @click="expanded = !expanded" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none help-print-hide">
+                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-600">model_training</span>
+                                Estados del Motor (Solver)
+                            </span>
+                            <span class="material-symbols-outlined text-gray-400 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''">expand_more</span>
+                        </button>
+                        <!-- Print header -->
+                        <h2 class="hidden print:block text-xl font-bold text-gray-900 p-4 border-b">Estados del Motor (Solver)</h2>
+                        
+                        <div x-show="expanded || printMode" x-collapse class="help-accordion-content border-t border-gray-100">
+                            <div class="p-4 space-y-4 text-sm text-gray-600">
+                                <div class="flex items-start gap-3">
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 font-bold rounded text-xs shrink-0 w-24 text-center border border-gray-200">NUEVO</span>
+                                    <p><b>NEW:</b> El dataset ha sido creado pero el motor de optimización (Solver) aún no ha intentado generar un horario.</p>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 font-bold rounded text-xs shrink-0 w-24 text-center border border-blue-200">CORRIENDO</span>
+                                    <p><b>RUNNING:</b> El motor está trabajando activamente buscando la mejor combinación posible. Durante este estado verás el <span class="font-bold text-gray-800">Score</span> actualizarse en tiempo real.</p>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 font-bold rounded text-xs shrink-0 w-24 text-center border border-green-200">COMPLETADO</span>
+                                    <p><b>COMPLETED:</b> El motor terminó de buscar porque alcanzó el tiempo límite o no encontró ninguna forma matemática de mejorar el puntaje actual.</p>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="px-2 py-1 bg-amber-100 text-amber-700 font-bold rounded text-xs shrink-0 w-24 text-center border border-amber-200">DETENIDO</span>
+                                    <p><b>STOPPED:</b> Un usuario detuvo manualmente la optimización antes de que terminara su tiempo límite. El horario generado hasta ese momento se guarda.</p>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="px-2 py-1 bg-red-100 text-red-700 font-bold rounded text-xs shrink-0 w-24 text-center border border-red-200">ERROR</span>
+                                    <p><b>ERROR:</b> Ocurrió un fallo técnico o una inconsistencia grave en los datos que hizo que el motor colapsara.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion 2: Glosario -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm" x-data="{ expanded: false }">
+                        <button @click="expanded = !expanded" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none help-print-hide">
+                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-600">dictionary</span>
+                                Glosario y Conceptos
+                            </span>
+                            <span class="material-symbols-outlined text-gray-400 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''">expand_more</span>
+                        </button>
+                        <h2 class="hidden print:block text-xl font-bold text-gray-900 p-4 border-b mt-6">Glosario y Conceptos</h2>
+                        
+                        <div x-show="expanded || printMode" x-collapse class="help-accordion-content border-t border-gray-100">
+                            <div class="p-4 space-y-4 text-sm text-gray-600">
+                                <p><b class="text-gray-900">Score (Puntaje):</b> Es el sistema de evaluación matemática. El score <b>siempre es 0 o negativo</b>. El objetivo del motor es acercar el score lo más posible a cero (0). Funciona deduciendo puntos por cada regla que se incumple.</p>
+                                
+                                <p><b class="text-gray-900">Reglas Críticas (Hard):</b> Son las leyes físicas del horario. Si se rompe alguna, el horario es <b>inválido e inutilizable</b> en la vida real. Ejemplo: Un profesor no puede dar dos clases a la vez.</p>
+                                
+                                <p><b class="text-gray-900">Reglas de Optimización (Soft):</b> Son preferencias deseables. Si se rompen, el horario sigue siendo válido, pero de menor calidad. Ejemplo: Minimizar los huecos (ventanas) del docente.</p>
+                                
+                                <p><b class="text-gray-900">Huecos / Ventanas:</b> Es el tiempo libre improductivo que un docente o estudiante tiene entre dos clases durante el mismo día.</p>
+                                
+                                <p><b class="text-gray-900">Ocupabilidad:</b> Métrica que mide qué porcentaje de capacidad tienen las aulas asignadas en relación a su aforo máximo y cantidad de alumnos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion 3: Iconografía -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm" x-data="{ expanded: false }">
+                        <button @click="expanded = !expanded" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none help-print-hide">
+                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-600">info</span>
+                                Iconografía del Calendario
+                            </span>
+                            <span class="material-symbols-outlined text-gray-400 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''">expand_more</span>
+                        </button>
+                        <h2 class="hidden print:block text-xl font-bold text-gray-900 p-4 border-b mt-6">Iconografía del Calendario</h2>
+                        
+                        <div x-show="expanded || printMode" x-collapse class="help-accordion-content border-t border-gray-100">
+                            <div class="p-4 space-y-4 text-sm text-gray-600">
+                                
+                                <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                    <div class="w-8 h-8 rounded bg-gray-200 flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-gray-600 text-[18px]">lock</span>
+                                    </div>
+                                    <p><b>Candado:</b> Identifica a las reglas o clases fijas que <b>no pueden modificarse</b> desde el sistema de horarios.</p>
+                                </div>
+
+                                <div class="mt-4 border-t border-gray-100 pt-4">
+                                    <h4 class="font-bold text-gray-900 mb-3">Etiquetas de Conflicto en Rojo:</h4>
+                                    <p class="mb-3 text-xs">Cuando una tarjeta tiene el borde rojo, mostrará una de estas etiquetas en la esquina superior izquierda indicando exactamente qué regla física se está rompiendo:</p>
+                                    
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="flex items-center gap-2 bg-red-50 p-2 rounded border border-red-100">
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 flex items-center gap-1 border border-red-200">
+                                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                Grupo
+                                            </span>
+                                            <p class="text-xs">Una sección de alumnos tiene dos clases al mismo tiempo.</p>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-2 bg-red-50 p-2 rounded border border-red-100">
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 flex items-center gap-1 border border-red-200">
+                                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                Doc.
+                                            </span>
+                                            <p class="text-xs">El profesor está asignado a dos clases a la misma hora.</p>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-2 bg-red-50 p-2 rounded border border-red-100">
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 flex items-center gap-1 border border-red-200">
+                                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                                Aula
+                                            </span>
+                                            <p class="text-xs">Dos clases diferentes están usando la misma aula al mismo tiempo.</p>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-2 bg-red-50 p-2 rounded border border-red-100">
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 flex items-center gap-1 border border-red-200">
+                                                <span class="material-symbols-outlined text-[12px]">group_remove</span>
+                                                Inc. Doc.
+                                            </span>
+                                            <p class="text-xs">El curso está siendo dictado por dos profesores diferentes para la misma sección/grupo.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 border-t border-gray-100 pt-4">
+                                    <h4 class="font-bold text-gray-900 mb-3">Interacciones Manuales:</h4>
+                                    
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                            <div class="w-8 h-8 rounded bg-orange-100 flex items-center justify-center shrink-0">
+                                                <span class="material-symbols-outlined text-orange-600 text-[18px]">ink_eraser</span>
+                                            </div>
+                                            <p><b>Borrar Asignación:</b> Aparece en la esquina superior derecha de las tarjetas. Al darle clic, elimina esa clase del horario y la devuelve a la lista de "Sesiones Pendientes".</p>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                            <div class="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center shrink-0">
+                                                <span class="material-symbols-outlined text-indigo-600 text-[18px]">add</span>
+                                            </div>
+                                            <p><b>Agregar Asignación:</b> Al pasar el ratón sobre cualquier cuadro vacío (hueco) en el calendario, aparecerá este botón de suma (+). Haz clic en él para abrir una ventana y elegir qué sesión pendiente deseas asignar a ese horario.</p>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                            <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center shrink-0">
+                                                <span class="material-symbols-outlined text-blue-600 text-[18px]">push_pin</span>
+                                            </div>
+                                            <p><b>Fijar Clase (Pin):</b> Haz clic en el ícono del chinche en la esquina de la tarjeta. Si ves esto en el calendario, significa que la lección está bloqueada en ese horario y el motor de IA no tiene permitido moverla bajo ninguna circunstancia.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion 5: Formato de Importación (Excel) -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm" x-data="{ expanded: false }">
+                        <button @click="expanded = !expanded" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none help-print-hide">
+                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-600">table_chart</span>
+                                Formato de Importación (Excel)
+                            </span>
+                            <span class="material-symbols-outlined text-gray-400 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''">expand_more</span>
+                        </button>
+                        <h2 class="hidden print:block text-xl font-bold text-gray-900 p-4 border-b mt-6">Formato de Importación (Excel)</h2>
+                        
+                        <div x-show="expanded || printMode" x-collapse class="help-accordion-content border-t border-gray-100">
+                            <div class="p-4 space-y-4 text-sm text-gray-600">
+                                <p>Al crear un nuevo dataset o descargar la plantilla, el archivo Excel debe contener exactamente las siguientes hojas (pestañas) y columnas en la primera fila:</p>
+                                
+                                <ul class="list-none space-y-4">
+                                    <li class="bg-gray-50 p-3 rounded border border-gray-100">
+                                        <b class="text-gray-900 text-base">1. Aulas</b>
+                                        <p class="mt-1">Define los espacios físicos disponibles.</p>
+                                        <p class="text-xs text-gray-500 mt-1"><b>Columnas:</b> Código, Nombre.</p>
+                                    </li>
+                                    <li class="bg-gray-50 p-3 rounded border border-gray-100">
+                                        <b class="text-gray-900 text-base">2. Docentes</b>
+                                        <p class="mt-1">Define los profesores de la institución.</p>
+                                        <p class="text-xs text-gray-500 mt-1"><b>Columnas:</b> Código, Nombre.</p>
+                                    </li>
+                                    <li class="bg-gray-50 p-3 rounded border border-gray-100">
+                                        <b class="text-gray-900 text-base">3. Cursos</b>
+                                        <p class="mt-1">Catálogo de materias a dictarse.</p>
+                                        <p class="text-xs text-gray-500 mt-1"><b>Columnas:</b> Código, Nombre.</p>
+                                    </li>
+                                    <li class="bg-gray-50 p-3 rounded border border-gray-100">
+                                        <b class="text-gray-900 text-base">4. Secciones</b>
+                                        <p class="mt-1">Agrupaciones de estudiantes (Ej: "1er Grado A"). Soporta jerarquías.</p>
+                                        <p class="text-xs text-gray-500 mt-1"><b>Columnas:</b> Código, Nombre, Código Padre.</p>
+                                    </li>
+                                    <li class="bg-gray-50 p-3 rounded border border-gray-100">
+                                        <b class="text-gray-900 text-base">5. Bloques Horarios</b>
+                                        <p class="mt-1">Tiempos en los que se pueden dictar clases.</p>
+                                        <p class="text-xs text-gray-500 mt-1"><b>Columnas:</b> Código, Día de la semana (1-7), Nombre del día (Lunes, etc.), Hora Inicio (HH:MM), Hora Fin (HH:MM).</p>
+                                    </li>
+                                    <li class="bg-gray-50 p-3 rounded border border-gray-100">
+                                        <b class="text-gray-900 text-base">6. Curso-Docente</b>
+                                        <p class="mt-1">Define qué profesor está calificado para dictar qué materia.</p>
+                                        <p class="text-xs text-gray-500 mt-1"><b>Columnas:</b> Código Docente, Nombre Docente, Código Curso, Nombre Curso.</p>
+                                    </li>
+                                    <li class="bg-gray-50 p-3 rounded border border-gray-100">
+                                        <b class="text-gray-900 text-base">7. Sesiones</b>
+                                        <p class="mt-1">La carga académica final. Son los "bloques" que el motor deberá ubicar en el horario.</p>
+                                        <p class="text-xs text-gray-500 mt-1"><b>Columnas:</b> Código Curso, Nombre Curso, Código Sección, Nombre Sección, Código Docente (opcional), Nombre Docente (opcional), Código Aula (opcional), Nombre Aula (opcional), Código Bloque (opcional), Descripción Bloque, Duración (cantidad de bloques), Fija (Sí/No).</p>
+                                    </li>
+                                </ul>
+
+                                <div class="bg-indigo-50 text-indigo-800 p-3 rounded text-xs border border-indigo-100 mt-4">
+                                    <span class="font-bold block mb-1">Nota Importante:</span>
+                                    En la hoja de <b>Sesiones</b>, puedes pre-asignar profesores, aulas o bloques horarios colocando sus códigos respectivos. Si dejas la columna de "Código Bloque" en blanco, la sesión se considerará "Pendiente" y la IA se encargará de encontrarle el mejor lugar. Si pones "Sí" en la columna "Fija", el motor nunca moverá esa sesión de su lugar asignado.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion 4: Barra de Controles Flotante -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm" x-data="{ expanded: false }">
+                        <button @click="expanded = !expanded" class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none help-print-hide">
+                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-600">smart_button</span>
+                                Barra de Controles (Toolbar)
+                            </span>
+                            <span class="material-symbols-outlined text-gray-400 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''">expand_more</span>
+                        </button>
+                        <h2 class="hidden print:block text-xl font-bold text-gray-900 p-4 border-b mt-6">Barra de Controles (Toolbar)</h2>
+                        
+                        <div x-show="expanded || printMode" x-collapse class="help-accordion-content border-t border-gray-100">
+                            <div class="p-4 space-y-4 text-sm text-gray-600">
+                                <p>La barra flotante en la parte inferior de la pantalla contiene la telemetría en tiempo real y los controles del motor:</p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                        <div class="w-8 h-8 rounded bg-emerald-100 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-emerald-600 text-[18px]">bolt</span>
+                                        </div>
+                                        <p><b>Generar:</b> Inicia el motor por primera vez para crear un horario desde cero.</p>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                        <div class="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-indigo-600 text-[18px]">auto_awesome</span>
+                                        </div>
+                                        <p><b>Re-Optimizar:</b> Retoma un horario existente e intenta mejorarlo (bajar el score).</p>
+                                    </div>
+
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                        <div class="w-8 h-8 rounded bg-red-100 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-red-600 text-[18px]">stop</span>
+                                        </div>
+                                        <p><b>Detener:</b> Frena la optimización actual. Guarda el mejor progreso logrado hasta ese momento.</p>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                        <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-blue-600 text-[18px]">refresh</span>
+                                        </div>
+                                        <p><b>Refrescar:</b> Actualiza los cuadros del calendario para mostrar cómo va la distribución del horario mientras el motor está corriendo.</p>
+                                    </div>
+
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                        <div class="w-8 h-8 rounded bg-gray-200 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-gray-600 text-[18px]">download</span>
+                                        </div>
+                                        <p><b>Exportar:</b> Descarga el horario terminado (disponible cuando no está corriendo).</p>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                        <div class="w-8 h-8 rounded bg-red-100 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-red-600 text-[18px]">warning</span>
+                                        </div>
+                                        <p><b>Problemas:</b> Parpadea en rojo si hay errores matemáticos graves (ej. faltan profesores o aulas) que impiden iniciar el motor.</p>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100">
+                                        <div class="w-8 h-8 rounded bg-gray-200 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-gray-600 text-[18px]">speed</span>
+                                        </div>
+                                        <p><b>Velocidad (e/s):</b> Muestra cuántas combinaciones (evaluaciones) por segundo analiza el motor.</p>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100 md:col-span-2">
+                                        <div class="w-8 h-8 rounded bg-emerald-100 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-emerald-600 text-[18px]">shield</span>
+                                        </div>
+                                        <p><b>Hard Score (Escudo):</b> Muestra los puntos perdidos por romper Reglas Críticas. Si está en rojo oscuro (negativo), el horario tiene choques y es inválido. Si está en verde (0), el horario es matemáticamente posible.</p>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded border border-gray-100 md:col-span-2">
+                                        <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-blue-600 text-[18px]">tune</span>
+                                        </div>
+                                        <p><b>Soft Score (Filtros):</b> Muestra los puntos perdidos por romper Reglas de Optimización. Siempre es negativo; mientras más cercano a cero (0) esté, mejor optimizado estará el horario (menos huecos para profesores, etc.).</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            
+            <!-- Footer -->
+            <div class="px-4 py-4 bg-gray-50 border-t border-gray-200 text-center text-xs text-gray-500 help-print-hide flex justify-center items-center gap-1">
+                Powered by <a href="https://timefold.ai" target="_blank" rel="noopener noreferrer" class="font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Timefold Solver</a>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}
