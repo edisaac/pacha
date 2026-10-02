@@ -1,0 +1,149 @@
+{{ define "lesson_list" }}
+<div class="border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-lowest" id="lesson-list-container" hx-get="/planing/{{ .TaskID }}/details/lessons?mode=list" hx-trigger="refreshgrid from:body" hx-swap="outerHTML" x-data="{ filters: { subject: {id: '{{ .Filter.SubjectID }}', name: '{{ .Filter.SubjectName }}'}, group: {id: '{{ .Filter.GroupID }}', name: '{{ .Filter.GroupName }}'}, teacher: {id: '{{ .Filter.TeacherID }}', name: '{{ .Filter.TeacherName }}'}, room: {id: '{{ .Filter.RoomID }}', name: '{{ .Filter.RoomName }}'}, timeslot: {id: '{{ .Filter.TimeslotID }}', name: '{{ .Filter.TimeslotName }}'} } }">
+  <div class="px-md py-sm bg-surface-container-low border-b border-outline-variant/30 flex justify-between items-center">
+     <h3 class="text-label-md font-label-md font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-primary">play_lesson</span>
+        Catálogo de Sesiones
+     </h3>
+     <div class="flex items-center gap-2">
+       <div x-data="{ time: new Date().toLocaleTimeString() }" class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary shadow-sm" title="Actualizado a esta hora (Usa el botón Recargar Tablas para forzar actualización)">
+         <svg class="h-3.5 w-3.5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+         <span x-text="'Actualizado: ' + time"></span>
+       </div>
+       <form id="lessons-filter-form" hx-get="/planing/{{ .TaskID }}/details/lessons?mode=list" hx-target="#lesson-list-container" hx-trigger="change from:select, submit" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#search-spinner" class="flex items-center gap-2 m-0">
+         <input type="hidden" name="subject_id" x-model="filters.subject.id">
+         <input type="hidden" name="group_id" x-model="filters.group.id">
+         <input type="hidden" name="teacher_id" x-model="filters.teacher.id">
+         <input type="hidden" name="room_id" x-model="filters.room.id">
+         <input type="hidden" name="timeslot_id" x-model="filters.timeslot.id">
+         <div class="relative group">
+            <select name="status" class="appearance-none text-sm pl-8 pr-6 py-1.5 rounded-lg border border-outline-variant/50 bg-surface text-on-surface focus:outline-none focus:border-primary cursor-pointer hover:bg-surface-container-low transition-colors">
+                <option value="" {{ if eq .Filter.Status "" }}selected{{ end }}>Todos</option>
+                <option value="assigned" {{ if eq .Filter.Status "assigned" }}selected{{ end }}>Asignados</option>
+                <option value="unassigned" {{ if eq .Filter.Status "unassigned" }}selected{{ end }}>Sin Asignar</option>
+            </select>
+            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">filter_list</span>
+         </div>
+         <div class="relative flex items-center">
+             <input type="search" id="search-input-lessons" name="q" value="{{ .SearchQuery }}" placeholder="Buscar sesión..." 
+                    class="text-sm px-3 py-1.5 rounded-lg border border-outline-variant/50 bg-surface text-on-surface focus:outline-none focus:border-primary w-48 pr-8"
+                    hx-get="/planing/{{ .TaskID }}/details/lessons?mode=list"
+                    hx-target="#lesson-list-container"
+                    hx-trigger="keyup changed delay:500ms, search"
+                    hx-include="closest form"
+                    hx-push-url="true"
+                    hx-indicator="#search-spinner"
+                    hx-swap="outerHTML">
+             <span id="search-spinner" class="htmx-indicator absolute right-2 flex items-center pointer-events-none">
+                 <span class="material-symbols-outlined text-[16px] animate-spin text-primary">sync</span>
+             </span>
+         </div>
+       </form>
+      </div>
+   </div>
+   <div class="px-md py-sm bg-surface border-b border-outline-variant/30 flex gap-2 flex-wrap" x-show="filters.subject.id || filters.group.id || filters.teacher.id || filters.room.id || filters.timeslot.id" style="display: none;">
+      <template x-if="filters.subject.id">
+          <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+              Curso: <span x-text="filters.subject.name" class="font-bold"></span>
+              <button @click.prevent="filters.subject.id = ''; filters.subject.name = ''; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))" class="hover:text-error ml-1 flex"><span class="material-symbols-outlined text-[14px]">close</span></button>
+          </span>
+      </template>
+      <template x-if="filters.group.id">
+          <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+              Sección: <span x-text="filters.group.name" class="font-bold"></span>
+              <button @click.prevent="filters.group.id = ''; filters.group.name = ''; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))" class="hover:text-error ml-1 flex"><span class="material-symbols-outlined text-[14px]">close</span></button>
+          </span>
+      </template>
+      <template x-if="filters.teacher.id">
+          <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+              Docente: <span x-text="filters.teacher.name" class="font-bold"></span>
+              <button @click.prevent="filters.teacher.id = ''; filters.teacher.name = ''; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))" class="hover:text-error ml-1 flex"><span class="material-symbols-outlined text-[14px]">close</span></button>
+          </span>
+      </template>
+      <template x-if="filters.room.id">
+          <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+              Aula: <span x-text="filters.room.name" class="font-bold"></span>
+              <button @click.prevent="filters.room.id = ''; filters.room.name = ''; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))" class="hover:text-error ml-1 flex"><span class="material-symbols-outlined text-[14px]">close</span></button>
+          </span>
+      </template>
+      <template x-if="filters.timeslot.id">
+          <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+              Horario: <span x-text="filters.timeslot.name" class="font-bold"></span>
+              <button @click.prevent="filters.timeslot.id = ''; filters.timeslot.name = ''; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))" class="hover:text-error ml-1 flex"><span class="material-symbols-outlined text-[14px]">close</span></button>
+          </span>
+      </template>
+   </div>
+   <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse text-body-sm">
+      <thead>
+        <tr class="bg-surface-container-high/40 text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/20">
+            <th class="py-3 px-4 font-semibold">Curso</th>
+            <th class="py-3 px-4 font-semibold">Sección</th>
+            <th class="py-3 px-4 font-semibold">Docente</th>
+            <th class="py-3 px-4 font-semibold">Aula</th>
+            <th class="py-3 px-4 font-semibold">Bloque Horario</th>
+            <th class="py-3 px-4 font-semibold text-center">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {{ range .Lessons }}
+        <tr class="hover:bg-surface-container-low transition-colors group/row">
+            <td class="py-3 px-4 font-label-sm text-[12px] font-semibold text-primary cursor-pointer hover:underline"
+                @click="filters.subject.id = '{{ .SubjectID }}'; filters.subject.name = '{{ .Subject }}'; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))"
+                title="Filtrar por este curso">
+                {{ .Subject }}
+            </td>
+            <td class="py-3 px-4 font-medium text-on-surface-variant cursor-pointer hover:text-primary hover:underline"
+                @click="filters.group.id = '{{ .GroupID }}'; filters.group.name = '{{ .Group }}'; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))"
+                title="Filtrar por esta sección">
+                {{ .Group }}
+            </td>
+            <td class="py-3 px-4 font-medium text-on-surface-variant cursor-pointer hover:text-primary hover:underline"
+                @click="filters.teacher.id = '{{ .TeacherID }}'; filters.teacher.name = '{{ .Teacher }}'; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))"
+                title="Filtrar por este docente">
+                {{ .Teacher }}
+            </td>
+            <td class="py-3 px-4 font-medium text-secondary cursor-pointer hover:text-primary hover:underline"
+                @click="filters.room.id = '{{ .RoomID }}'; filters.room.name = '{{ .Room }}'; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))"
+                title="Filtrar por esta aula">
+                {{ .Room }}
+            </td>
+            <td class="py-3 px-4 font-medium text-secondary cursor-pointer hover:text-primary hover:underline"
+                @click="filters.timeslot.id = '{{ .TimeslotID }}'; filters.timeslot.name = '{{ .Timeslot }}'; $nextTick(() => document.getElementById('lessons-filter-form').dispatchEvent(new Event('submit', {cancelable: true})))"
+                title="Filtrar por este horario">
+                {{ .Timeslot }}
+            </td>
+            <td class="py-3 px-4 text-center">
+                {{ if .Timeslot }}
+                <span class="text-green-600 font-bold material-symbols-outlined text-[18px]" title="Asignado">check_circle</span>
+                {{ else }}
+                <span class="text-orange-500 font-bold material-symbols-outlined text-[18px]" title="Sin Asignar (Pendiente)">pending</span>
+                {{ end }}
+            </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="6" class="py-6 text-center text-on-surface-variant">No hay sesiones registradas.</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <div class="px-md py-sm border-t border-outline-variant/30 bg-surface flex justify-between items-center text-sm text-on-surface-variant">
+    <span>Mostrando {{ len .Lessons }} de {{ .TotalItems }} registros</span>
+    <div class="flex gap-2">
+      <button {{ if not .HasPrev }}disabled{{ end }}
+              hx-get="/planing/{{ .TaskID }}/details/lessons?mode=list&page={{ .PrevPage }}&q={{ .SearchQuery }}&status={{ .Filter.Status }}&subject_id={{ .Filter.SubjectID }}&group_id={{ .Filter.GroupID }}&teacher_id={{ .Filter.TeacherID }}&room_id={{ .Filter.RoomID }}&timeslot_id={{ .Filter.TimeslotID }}"
+              hx-target="#lesson-list-container"
+              class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Anterior</button>
+      <span class="px-2 py-1 flex items-center">Página {{ .CurrentPage }} de {{ .TotalPages }}</span>
+      <button {{ if not .HasNext }}disabled{{ end }}
+              hx-get="/planing/{{ .TaskID }}/details/lessons?mode=list&page={{ .NextPage }}&q={{ .SearchQuery }}&status={{ .Filter.Status }}&subject_id={{ .Filter.SubjectID }}&group_id={{ .Filter.GroupID }}&teacher_id={{ .Filter.TeacherID }}&room_id={{ .Filter.RoomID }}&timeslot_id={{ .Filter.TimeslotID }}"
+              hx-target="#lesson-list-container"
+              class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Siguiente</button>
+    </div>
+  </div>
+</div>
+{{ end }}

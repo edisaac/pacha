@@ -1,0 +1,574 @@
+{{ define "layout" }}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacha - El Optimizador de Tiempo</title>
+    <!-- Tailwind CSS (Compilado Estático) -->
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- HTMX SSE Extension -->
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/sse.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    
+    <!-- Tailwind CSS (CDN para nuevos estilos de maqueta) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline": "#767586",
+                      "secondary": "#565e74",
+                      "inverse-primary": "#c0c1ff",
+                      "primary": "#4648d4",
+                      "on-error": "#ffffff",
+                      "primary-container": "#6063ee",
+                      "outline-variant": "#c7c4d7",
+                      "surface-container-highest": "#d5e3fc",
+                      "surface-container-high": "#dce9ff",
+                      "on-primary-container": "#fffbff",
+                      "surface-dim": "#ccdbf3",
+                      "on-secondary-fixed-variant": "#3f465c",
+                      "surface-variant": "#d5e3fc",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#494bd6",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "surface-container-low": "#eff4ff",
+                      "on-secondary-fixed": "#131b2e",
+                      "primary-fixed": "#e1e0ff",
+                      "on-tertiary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "error": "#ba1a1a",
+                      "secondary-fixed-dim": "#bec6e0",
+                      "error-container": "#ffdad6",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface": "#f8f9ff",
+                      "on-tertiary-fixed-variant": "#444749",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "on-secondary-container": "#5c647a",
+                      "on-tertiary-container": "#fbfdff",
+                      "secondary-fixed": "#dae2fd",
+                      "tertiary": "#595c5e",
+                      "on-primary-fixed": "#07006c",
+                      "tertiary-fixed-dim": "#c4c7c9",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary-container": "#727577",
+                      "secondary-container": "#dae2fd",
+                      "tertiary-fixed": "#e0e3e5",
+                      "background": "#f8f9ff",
+                      "on-surface-variant": "#464554",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface": "#0d1c2e",
+                      "surface-container": "#e6eeff",
+                      "inverse-surface": "#233144",
+                      "on-background": "#0d1c2e",
+                      "on-tertiary-fixed": "#191c1e",
+                      "on-primary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "md": "16px",
+                      "xxl": "64px",
+                      "sm": "8px",
+                      "base": "4px",
+                      "xs": "4px",
+                      "xl": "40px",
+                      "margin-desktop": "48px",
+                      "lg": "24px"
+              },
+              "fontFamily": {
+                      "label-sm": ["JetBrains Mono"],
+                      "display-lg": ["Hanken Grotesk"],
+                      "headline-md": ["Hanken Grotesk"],
+                      "label-md": ["JetBrains Mono"],
+                      "headline-lg": ["Hanken Grotesk"],
+                      "headline-lg-mobile": ["Hanken Grotesk"],
+                      "body-lg": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "body-md": ["Inter"]
+              }
+            }
+          }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .glow-shadow {
+            box-shadow: 0 0 24px rgba(99, 102, 241, 0.1);
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .progress-bar-animated {
+            transition: width 0.5s ease-out;
+        }
+        .drag-over {
+            background-color: rgba(96, 99, 238, 0.05);
+            border-color: #6063ee;
+        }
+
+        /* Sidebar tooltip behavior when collapsed */
+        .sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        .sidebar-collapsed .nav-text {
+            display: none;
+        }
+        .sidebar-collapsed .sidebar-header-full {
+            display: none;
+        }
+        .sidebar-collapsed .sidebar-header-compact {
+            display: flex;
+        }
+        .sidebar-collapsed .sidebar-cta-full {
+            display: none;
+        }
+        .sidebar-collapsed .sidebar-cta-compact {
+            display: flex;
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col antialiased" x-data="{ activeTab: 'resumen', intervalTab: 'ocupabilidad', isCollapsed: false }">
+
+    <div id="content-area" class="flex flex-1 min-h-screen relative w-full">
+        {{ template "content" . }}
+    </div>
+
+    <script>
+      function initAlpineComponents() {
+        if (!window.Alpine) return;
+        
+        // Inicializar el store global si no existe para evitar errores en inyecciones de HTMX
+        if (!window.Alpine.store('task')) {
+            window.Alpine.store('task', {
+                status: 'NEW', // Valor por defecto
+                get isEditable() { return this.status === 'NEW'; },
+                get isRunning() { return this.status === 'RUNNING'; },
+                get isFinished() { return ['COMPLETED', 'STOPPED', 'ERROR'].includes(this.status); }
+            });
+        }
+
+        if (window.Alpine.scoreChartInitialized) return;
+        
+        Alpine.data('hardChart', (taskId) => ({
+          taskId: taskId,
+          colors: ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#f43f5e'],
+
+          init() {
+            const canvas = this.$el.querySelector('canvas');
+            if (!canvas) return;
+
+            if (canvas._chartjs) {
+                canvas._chartjs.destroy();
+            }
+
+            const ctx = canvas.getContext('2d');
+            canvas._chartjs = new Chart(ctx, {
+              type: 'line',
+              data: { labels: [], datasets: [] },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                  x: { display: true },
+                  y: { 
+                      stacked: true,
+                      beginAtZero: true,
+                      type: 'linear',
+                      display: true,
+                      position: 'left',
+                      title: { display: true, text: 'Conflicts', color: '#6b7280', font: { weight: 'bold' } }
+                  },
+                  yScore: {
+                      beginAtZero: true,
+                      type: 'linear',
+                      display: true,
+                      position: 'right',
+                      grid: { drawOnChartArea: false },
+                      title: { display: true, text: 'Total Score', color: '#ef4444', font: { weight: 'bold' } }
+                  }
+                },
+                plugins: {
+                  legend: { display: true, position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10 } } },
+                  annotation: { annotations: {} }
+                }
+              }
+            });
+            
+            this.$watch('activeTab', value => {
+                const c = this.$el.querySelector('canvas');
+                if (value === 'resumen' && c && c._chartjs) {
+                    setTimeout(() => { c._chartjs.resize(); c._chartjs.update(); }, 50);
+                }
+            });
+            
+            if (this.activeTab === 'resumen') {
+                setTimeout(() => {
+                    const c = this.$el.querySelector('canvas');
+                    if (c && c._chartjs) { c._chartjs.resize(); c._chartjs.update(); }
+                }, 100);
+            }
+
+            this.fetchData();
+          },
+
+          destroy() {
+            const canvas = this.$el.querySelector('canvas');
+            if (canvas && canvas._chartjs) {
+                canvas._chartjs.destroy();
+                canvas._chartjs = null;
+            }
+          },
+
+          fetchData() {
+            const canvas = this.$el.querySelector('canvas');
+            if (!canvas || !canvas._chartjs) return;
+            
+            Promise.all([
+                fetch(`/api/task/${this.taskId}/score-history`).then(res => res.json()),
+                fetch(`/api/task/${this.taskId}/conflicts-history`).then(res => res.json())
+            ])
+            .then(([scoreData, conflictsData]) => {
+                if (!canvas._chartjs) return;
+                
+                let labels = [];
+                let startTime = 0;
+                
+                if (scoreData && scoreData.tiempos && scoreData.tiempos.length > 0) {
+                    startTime = scoreData.start_time_millis > 0 ? Math.min(scoreData.start_time_millis, scoreData.tiempos[0]) : scoreData.tiempos[0];
+                    labels = scoreData.tiempos.map(t => Math.floor((t - startTime) / 1000) + 's');
+                } else if (conflictsData && conflictsData.tiempos && conflictsData.tiempos.length > 0) {
+                    startTime = conflictsData.start_time_millis > 0 ? Math.min(conflictsData.start_time_millis, conflictsData.tiempos[0]) : conflictsData.tiempos[0];
+                    labels = conflictsData.tiempos.map(t => Math.floor((t - startTime) / 1000) + 's');
+                }
+                
+                canvas._chartjs.data.labels = labels;
+
+                const hardRulesList = ['roomConflict', 'teacherConflict', 'groupHierarchyConflict', 'teacherConsistency'];
+                const datasets = [];
+                let colorIndex = 0;
+
+                // Add Total Score Line Dataset
+                if (scoreData && scoreData.hard && scoreData.hard.length > 0) {
+                    const scoreValues = scoreData.hard.map(v => v > 0 ? v : -v); 
+                    datasets.push({
+                        label: 'Total Hard Score',
+                        data: scoreValues,
+                        borderColor: '#ef4444',
+                        backgroundColor: '#ef4444',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHitRadius: 10,
+                        order: 0, // Draw on top
+                        stack: 'line_total',
+                        yAxisID: 'yScore'
+                    });
+                }
+                
+                // Add Conflicts Stacked Area Datasets
+                if (conflictsData && conflictsData.rules) {
+                    for (const [ruleName, counts] of Object.entries(conflictsData.rules)) {
+                        if (hardRulesList.includes(ruleName) && counts.some(c => c > 0)) {
+                            const color = this.colors[colorIndex % this.colors.length];
+                            datasets.push({
+                                label: ruleName,
+                                data: counts, 
+                                borderColor: color,
+                                backgroundColor: color + '80', // 50% opacity
+                                borderWidth: 1,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 0,
+                                pointHitRadius: 10,
+                                order: 1, // Draw below line
+                                stack: 'stacked_areas'
+                            });
+                            colorIndex++;
+                        }
+                    }
+                }
+                
+                canvas._chartjs.data.datasets = datasets;
+                
+                // Add annotations
+                if (scoreData && scoreData.events && scoreData.events.length > 0 && startTime > 0) {
+                    const annotations = {};
+                    scoreData.events.forEach((ev, idx) => {
+                        const elapsedS = Math.floor((ev.time_millis - startTime) / 1000);
+                        if (elapsedS >= 0 && labels.length > 0) {
+                            let closestLabel = labels[0];
+                            let minDiff = Infinity;
+                            for (let i = 0; i < labels.length; i++) {
+                                const labelVal = parseInt(labels[i].replace('s', ''));
+                                if (!isNaN(labelVal)) {
+                                    const diff = Math.abs(labelVal - elapsedS);
+                                    if (diff < minDiff) {
+                                        minDiff = diff;
+                                        closestLabel = labels[i];
+                                    }
+                                }
+                            }
+                            annotations['event' + idx] = {
+                                type: 'line',
+                                scaleID: 'x',
+                                value: closestLabel,
+                                borderColor: ev.type === 'START' ? '#22c55e' : '#ef4444',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    display: true,
+                                    content: ev.type,
+                                    position: 'start'
+                                }
+                            };
+                        }
+                    });
+                    canvas._chartjs.options.plugins.annotation.annotations = annotations;
+                }
+                
+                canvas._chartjs.update();
+            })
+            .catch(err => console.error('Error fetching hard data:', err));
+          }
+        }));
+
+        Alpine.data('softChart', (taskId) => ({
+          taskId: taskId,
+          colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9'],
+
+          init() {
+            const canvas = this.$el.querySelector('canvas');
+            if (!canvas) return;
+
+            if (canvas._chartjs) {
+                canvas._chartjs.destroy();
+            }
+
+            const ctx = canvas.getContext('2d');
+            canvas._chartjs = new Chart(ctx, {
+              type: 'line',
+              data: { labels: [], datasets: [] },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                  x: { display: true },
+                  y: { 
+                      stacked: true,
+                      beginAtZero: true,
+                      type: 'linear',
+                      display: true,
+                      position: 'left',
+                      title: { display: true, text: 'Conflicts', color: '#6b7280', font: { weight: 'bold' } }
+                  },
+                  yScore: {
+                      beginAtZero: true,
+                      type: 'linear',
+                      display: true,
+                      position: 'right',
+                      grid: { drawOnChartArea: false },
+                      title: { display: true, text: 'Total Score', color: '#4648d4', font: { weight: 'bold' } }
+                  }
+                },
+                plugins: {
+                  legend: { display: true, position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10 } } },
+                  annotation: { annotations: {} }
+                }
+              }
+            });
+            
+            this.$watch('activeTab', value => {
+                const c = this.$el.querySelector('canvas');
+                if (value === 'resumen' && c && c._chartjs) {
+                    setTimeout(() => { c._chartjs.resize(); c._chartjs.update(); }, 50);
+                }
+            });
+            
+            if (this.activeTab === 'resumen') {
+                setTimeout(() => {
+                    const c = this.$el.querySelector('canvas');
+                    if (c && c._chartjs) { c._chartjs.resize(); c._chartjs.update(); }
+                }, 100);
+            }
+
+            this.fetchData();
+          },
+
+          destroy() {
+            const canvas = this.$el.querySelector('canvas');
+            if (canvas && canvas._chartjs) {
+                canvas._chartjs.destroy();
+                canvas._chartjs = null;
+            }
+          },
+
+          fetchData() {
+            const canvas = this.$el.querySelector('canvas');
+            if (!canvas || !canvas._chartjs) return;
+            
+            Promise.all([
+                fetch(`/api/task/${this.taskId}/score-history`).then(res => res.json()),
+                fetch(`/api/task/${this.taskId}/conflicts-history`).then(res => res.json())
+            ])
+            .then(([scoreData, conflictsData]) => {
+                if (!canvas._chartjs) return;
+                
+                let labels = [];
+                let startTime = 0;
+                
+                if (scoreData && scoreData.tiempos && scoreData.tiempos.length > 0) {
+                    startTime = scoreData.start_time_millis > 0 ? Math.min(scoreData.start_time_millis, scoreData.tiempos[0]) : scoreData.tiempos[0];
+                    labels = scoreData.tiempos.map(t => Math.floor((t - startTime) / 1000) + 's');
+                } else if (conflictsData && conflictsData.tiempos && conflictsData.tiempos.length > 0) {
+                    startTime = conflictsData.start_time_millis > 0 ? Math.min(conflictsData.start_time_millis, conflictsData.tiempos[0]) : conflictsData.tiempos[0];
+                    labels = conflictsData.tiempos.map(t => Math.floor((t - startTime) / 1000) + 's');
+                }
+                
+                canvas._chartjs.data.labels = labels;
+
+                const hardRulesList = ['roomConflict', 'teacherConflict', 'groupHierarchyConflict', 'teacherConsistency'];
+                const datasets = [];
+                let colorIndex = 0;
+
+                // Add Total Score Line Dataset
+                if (scoreData && scoreData.soft && scoreData.soft.length > 0) {
+                    const scoreValues = scoreData.soft.map(v => v > 0 ? v : -v); 
+                    datasets.push({
+                        label: 'Total Soft Score',
+                        data: scoreValues,
+                        borderColor: '#4648d4',
+                        backgroundColor: '#4648d4',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHitRadius: 10,
+                        order: 0, // Draw on top
+                        stack: 'line_total',
+                        yAxisID: 'yScore'
+                    });
+                }
+                
+                // Add Conflicts Stacked Area Datasets
+                if (conflictsData && conflictsData.rules) {
+                    for (const [ruleName, counts] of Object.entries(conflictsData.rules)) {
+                        if (!hardRulesList.includes(ruleName) && counts.some(c => c > 0)) {
+                            const color = this.colors[colorIndex % this.colors.length];
+                            // Soft conflicts logic can be applied here to weight them if needed, but since they are already plotted...
+                            // The conflicts-history API probably already multiplies counts by weight, let's assume they are absolute numbers.
+                            datasets.push({
+                                label: ruleName,
+                                data: counts, 
+                                borderColor: color,
+                                backgroundColor: color + '80', // 50% opacity
+                                borderWidth: 1,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 0,
+                                pointHitRadius: 10,
+                                order: 1, // Draw below line
+                                stack: 'stacked_areas'
+                            });
+                            colorIndex++;
+                        }
+                    }
+                }
+                
+                canvas._chartjs.data.datasets = datasets;
+                
+                // Add annotations
+                if (scoreData && scoreData.events && scoreData.events.length > 0 && startTime > 0) {
+                    const annotations = {};
+                    scoreData.events.forEach((ev, idx) => {
+                        const elapsedS = Math.floor((ev.time_millis - startTime) / 1000);
+                        if (elapsedS >= 0 && labels.length > 0) {
+                            let closestLabel = labels[0];
+                            let minDiff = Infinity;
+                            for (let i = 0; i < labels.length; i++) {
+                                const labelVal = parseInt(labels[i].replace('s', ''));
+                                if (!isNaN(labelVal)) {
+                                    const diff = Math.abs(labelVal - elapsedS);
+                                    if (diff < minDiff) {
+                                        minDiff = diff;
+                                        closestLabel = labels[i];
+                                    }
+                                }
+                            }
+                            annotations['event' + idx] = {
+                                type: 'line',
+                                scaleID: 'x',
+                                value: closestLabel,
+                                borderColor: ev.type === 'START' ? '#22c55e' : '#ef4444',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    display: true,
+                                    content: ev.type,
+                                    position: 'start'
+                                }
+                            };
+                        }
+                    });
+                    canvas._chartjs.options.plugins.annotation.annotations = annotations;
+                }
+                
+                canvas._chartjs.update();
+            })
+            .catch(err => console.error('Error fetching soft data:', err));
+          }
+        }));
+        
+        window.Alpine.scoreChartInitialized = true;
+      }
+
+      if (window.Alpine) {
+        initAlpineComponents();
+      } else {
+        document.addEventListener('alpine:init', initAlpineComponents);
+      }
+    </script>
+    {{ template "global_help_drawer" . }}
+</body>
+</html>
+{{ end }}

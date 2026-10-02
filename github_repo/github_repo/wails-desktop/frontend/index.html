@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horarios Desktop - Cargando</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 480px;
+            animation: fadeIn 0.6s ease-out;
+        }
+        .logo-box {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            animation: pulse 2s infinite ease-in-out;
+        }
+        .logo-box svg {
+            width: 44px;
+            height: 44px;
+            color: #818cf8;
+        }
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #ffffff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #c7d2fe;
+        }
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(129, 140, 248, 0.3);
+            border-top-color: #818cf8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
+            50% { transform: scale(1.03); box-shadow: 0 25px 30px -5px rgba(129, 140, 248, 0.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-box">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <h1>Horarios Desktop</h1>
+        <p>Iniciando el motor de resolución nativo y los servicios locales. Por favor espera un momento...</p>
+        <div class="status-badge">
+            <div class="spinner"></div>
+            <span id="status-text">Conectando con servicios en segundo plano...</span>
+        </div>
+    </div>
+
+    <script>
+        // Intento de conexión al backend local cada 500ms
+        const targetUrl = 'http://localhost:8080/home';
+        let attempts = 0;
+        const maxAttempts = 60; // 30 segundos máximo
+
+        const statusText = document.getElementById('status-text');
+
+        const checkBackend = setInterval(() => {
+            attempts++;
+            if (attempts > 5) {
+                statusText.textContent = `Iniciando solver nativo (intento ${attempts}/${maxAttempts})...`;
+            }
+            
+            fetch(targetUrl, { method: 'HEAD', mode: 'no-cors' })
+                .then(() => {
+                    clearInterval(checkBackend);
+                    statusText.textContent = "¡Servicios listos! Abriendo interfaz...";
+                    setTimeout(() => {
+                        // Limpiar el contenido de carga y crear un iframe a pantalla completa
+                        document.body.innerHTML = '';
+                        document.body.style.margin = '0';
+                        document.body.style.overflow = 'hidden';
+                        
+                        const iframe = document.createElement('iframe');
+                        iframe.src = targetUrl;
+                        iframe.style.width = '100vw';
+                        iframe.style.height = '100vh';
+                        iframe.style.border = 'none';
+                        iframe.setAttribute('allow', 'fullscreen');
+                        document.body.appendChild(iframe);
+                    }, 300);
+                })
+                .catch(() => {
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkBackend);
+                        statusText.textContent = "Tiempo de espera agotado. Verifica los logs del sistema.";
+                        statusText.style.color = "#f87171";
+                    }
+                });
+        }, 500);
+    </script>
+</body>
+</html>

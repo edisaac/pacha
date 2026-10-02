@@ -1,0 +1,84 @@
+{{ define "teacher_list" }}
+<div class="border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-lowest" id="teacher-list-container" hx-get="/planing/{{ .TaskID }}/details/teachers?mode=list"  hx-swap="outerHTML">
+  <div class="px-md py-sm bg-surface-container-low border-b border-outline-variant/30 flex justify-between items-center">
+     <h3 class="text-label-md font-label-md font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-primary">badge</span>
+        Catálogo de Docentes
+     </h3>
+     <div class="flex items-center gap-2">
+       <input type="search" id="search-input-teachers" name="q" value="{{ .SearchQuery }}" placeholder="Buscar docente..." 
+              class="text-sm px-3 py-1.5 rounded-lg border border-outline-variant/50 bg-surface text-on-surface focus:outline-none focus:border-primary w-48"
+              hx-get="/planing/{{ .TaskID }}/details/teachers?mode=list"
+              hx-target="#teacher-list-container"
+              hx-trigger="keyup changed delay:500ms, search"
+              hx-swap="outerHTML">
+     </div>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse text-body-sm">
+      <thead>
+        <tr class="bg-surface-container-high/40 text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/20">
+          <th class="py-3 px-4 font-semibold">Código</th>
+          <th class="py-3 px-4 font-semibold">Nombre</th>
+          <th class="py-3 px-4 font-semibold text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {{ range .Teachers }}
+        <tr class="hover:bg-surface-container-low transition-colors">
+          <td class="py-3 px-4 font-label-sm text-[12px] font-semibold text-primary">{{ .Cod }}</td>
+          <td class="py-3 px-4 font-medium text-on-surface">{{ .Name }}</td>
+          <td class="py-3 px-4 text-right">
+            <div class="flex items-center justify-end gap-1">
+              
+              <!-- Ver Cursos Modal -->
+              <button hx-get="/planing/{{ $.TaskID }}/details/teacher_subjects/{{ .ID }}"
+                      hx-target="#modal-container"
+                      hx-swap="innerHTML"
+                      class="p-1.5 text-secondary hover:text-primary hover:bg-surface-variant rounded transition-colors flex items-center gap-1 text-[12px] font-label-sm font-semibold"
+                      title="Ver cursos habilitados">
+                <span class="material-symbols-outlined text-[18px]">library_books</span>
+                <span class="hidden lg:inline">Cursos</span>
+              </button>
+
+              <!-- Ver Calendario -->
+              <button hx-get="/planing/{{ $.TaskID }}/schedule/teacher/{{ .ID }}"
+                      hx-target="#teacher-calendar-grid-target"
+                      hx-swap="innerHTML"
+                      class="p-1.5 text-primary hover:bg-surface-variant rounded transition-colors flex items-center gap-1 text-[12px] font-label-sm font-semibold"
+                      @click="
+                        teacherTab = 'calendar';
+                        document.getElementById('calendar-active-teacher-name').innerText = '{{ .Name }}'; 
+                        document.getElementById('calendar-active-teacher-code').innerText = '{{ .Cod }}'; 
+                      "
+                      title="Ver calendario semanal">
+                <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+                <span class="hidden lg:inline">Calendario</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="4" class="py-6 text-center text-on-surface-variant">No hay docentes registrados.</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <div class="px-md py-sm border-t border-outline-variant/30 bg-surface flex justify-between items-center text-sm text-on-surface-variant">
+    <span>Mostrando {{ len .Teachers }} de {{ .TotalItems }} registros</span>
+    <div class="flex gap-2">
+      <button {{ if not .HasPrev }}disabled{{ end }}
+              hx-get="/planing/{{ .TaskID }}/details/teachers?mode=list&page={{ .PrevPage }}&q={{ .SearchQuery }}"
+              hx-target="#teacher-list-container"
+              class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Anterior</button>
+      <span class="px-2 py-1 flex items-center">Página {{ .CurrentPage }} de {{ .TotalPages }}</span>
+      <button {{ if not .HasNext }}disabled{{ end }}
+              hx-get="/planing/{{ .TaskID }}/details/teachers?mode=list&page={{ .NextPage }}&q={{ .SearchQuery }}"
+              hx-target="#teacher-list-container"
+              class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Siguiente</button>
+    </div>
+  </div>
+</div>
+{{ end }}

@@ -1,0 +1,25 @@
+{{ define "entity_selector" }}
+<div class="mt-4">
+  <div class="mb-3">
+    <button hx-get="/planing/{{ .TaskID }}/details/{{ if eq .ViewType "room" }}rooms{{ else if eq .ViewType "teacher" }}teachers{{ else }}groups{{ end }}" hx-target="body" hx-swap="beforeend" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center group">
+        Ver listado <span class="ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
+    </button>
+  </div>
+
+  <!-- Pills list (loaded via HTMX with mode=selector) -->
+  <div id="entity-list-{{ .ViewType }}" hx-get="/planing/{{ .TaskID }}/details/{{ if eq .ViewType "room" }}rooms{{ else if eq .ViewType "teacher" }}teachers{{ else }}groups{{ end }}?mode=selector" hx-trigger="load"
+    hx-target="#entity-list-{{ .ViewType }}" hx-swap="innerHTML"
+    class="mb-3 rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
+    <div class="flex flex-wrap gap-2">
+      <span class="text-xs text-gray-400 animate-pulse">Cargando…</span>
+    </div>
+  </div>
+
+  <!-- Grid container — filled when a pill is clicked -->
+  <div id="entity-grid-{{ .ViewType }}">
+    <div class="rounded-xl border-2 border-dashed border-gray-200 py-12 text-center text-sm text-gray-400">
+      Selecciona un elemento de la lista para ver su horario.
+    </div>
+  </div>
+</div>
+{{ end }}

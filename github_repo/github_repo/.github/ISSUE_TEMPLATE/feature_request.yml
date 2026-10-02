@@ -1,0 +1,38 @@
+name: Solicitud de Mejora / Regla Horaria
+description: Sugiere una nueva restricción o mejora para la aplicación
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Ámbito
+      description: ¿A qué parte del sistema afecta esta mejora?
+      options:
+        - Profesores
+        - Aulas
+        - Cursos
+        - Bloques de Horario
+        - Sección/Grupos de Estudiantes
+        - Sesiones         
+        - Motor de Resolución (Timefold Solver)
+        - Interfaz de Usuario (UI/UX)
+        - Importación/Exportación de Datos (Excel, PDF)
+        - Otro
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Caso de Uso
+      description: Describe el problema o la necesidad real.
+      placeholder: Por ejemplo, "Necesito que los profesores a tiempo parcial no tengan huecos mayores a 2 horas entre clases..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected_result
+    attributes:
+      label: Resultado Esperado
+      description: ¿Cómo debería comportarse el sistema una vez implementada la mejora?
+    validations:
+      required: true

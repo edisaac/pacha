@@ -1,0 +1,71 @@
+{{ define "left_sidebar" }}
+<!-- Sidebar Izquierdo -->
+<aside {{ if eq .Status "NEW" }}x-init="activeTab = 'rules'"{{ end }} :class="isCollapsed ? 'w-20 sidebar-collapsed' : 'w-[280px]'" class="flex fixed left-0 top-0 bottom-0 flex-col p-md gap-sm bg-surface-container-lowest/90 backdrop-blur-xl border-r border-outline-variant/30 shadow-xl shadow-primary/5 z-40 transition-all duration-300 ease-in-out">
+    <!-- Header with System Info & Collapse Toggle -->
+    <div class="mb-md pb-xs border-b border-outline-variant/20">
+        <div class="flex items-center justify-between mb-sm">
+            <div class="sidebar-header-full flex items-center gap-sm overflow-hidden transition-all duration-200">
+                <div class="w-10 h-10 rounded-lg bg-surface-container-highest flex-shrink-0 flex items-center justify-center border border-outline-variant overflow-hidden">
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-label-md font-label-md text-on-surface font-bold truncate">Pacha</h2>
+                    <p class="text-[10px] text-on-surface-variant truncate">El Optimizador de Tiempo</p>
+                </div>
+            </div>
+            <div class="sidebar-header-compact hidden items-center justify-center w-full pb-xs">
+                <div class="w-10 h-10 rounded-lg bg-surface-container-highest flex-shrink-0 flex items-center justify-center border border-outline-variant overflow-hidden">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Items -->
+    <div class="flex-1 flex flex-col gap-xs overflow-y-auto overflow-x-hidden">
+
+        <a @click.prevent="activeTab = 'resumen'" :class="activeTab === 'resumen' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Resumen">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+            <span class="nav-text whitespace-nowrap">Resumen</span>
+        </a>
+        <a @click.prevent="activeTab = 'rules'" :class="activeTab === 'rules' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Restricciones">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">rule</span>
+            <span class="nav-text whitespace-nowrap">Restricciones</span>
+        </a>
+        <a @click.prevent="activeTab = 'intervals'" :class="activeTab === 'intervals' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Bloques Horarios">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">timer</span>
+            <span class="nav-text whitespace-nowrap">Bloques Horarios</span>
+        </a>
+        <a @click.prevent="activeTab = 'room'" :class="activeTab === 'room' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Aulas">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">meeting_room</span>
+            <span class="nav-text whitespace-nowrap">Aulas</span>
+        </a>
+        <a @click.prevent="activeTab = 'teacher'" :class="activeTab === 'teacher' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Docentes">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">school</span>
+            <span class="nav-text whitespace-nowrap">Docentes</span>
+        </a>
+        <a @click.prevent="activeTab = 'group'" :class="activeTab === 'group' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Secciones">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">groups</span>
+            <span class="nav-text whitespace-nowrap">Secciones</span>
+        </a>
+        <a @click.prevent="activeTab = 'subject'" :class="activeTab === 'subject' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Cursos">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">book</span>
+            <span class="nav-text whitespace-nowrap">Cursos</span>
+        </a>
+        <a @click.prevent="activeTab = 'lesson'" :class="activeTab === 'lesson' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg transition-all duration-200 ease-out text-label-md font-label-md cursor-pointer" title="Sesiones">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">menu_book</span>
+            <span class="nav-text whitespace-nowrap">Sesiones</span>
+        </a>
+    </div>
+
+    <!-- Bottom utility items -->
+    <div class="mt-auto pt-md border-t border-outline-variant/20 flex flex-col gap-xs">
+        <a href="/home" class="nav-item group relative flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all duration-200 ease-out text-label-md font-label-md" title="Inicio">
+            <span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 0;">home</span>
+            <span class="nav-text whitespace-nowrap">Inicio</span>
+        </a>   
+        <button @click="isCollapsed = !isCollapsed" class="mt-xs flex items-center justify-center gap-sm px-sm py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all duration-200 text-label-sm font-label-sm border border-transparent hover:border-outline-variant/30" title="Alternar barra lateral">
+            <span class="material-symbols-outlined text-[18px]" x-text="isCollapsed ? 'chevron_right' : 'chevron_left'">chevron_left</span>
+            <span class="nav-text whitespace-nowrap" x-text="isCollapsed ? 'Expandir' : 'Minimizar'">Minimizar</span>
+        </button>
+    </div>
+</aside>
+{{ end }}

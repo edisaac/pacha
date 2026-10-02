@@ -1,0 +1,13 @@
+{{ define "lesson_metrics" }}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-md" id="lesson-metrics-container" hx-get="/planing/{{ .TaskID }}/details/lessons?mode=metrics" hx-trigger="refreshgrid from:body" hx-swap="outerHTML">
+  <div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+    <div>
+      <p class="text-[12px] font-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Sesiones</p>
+      <p class="text-[24px] font-headline-md font-bold text-on-surface mt-1">{{ .TotalItems }}</p>
+    </div>
+    <div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+      <span class="material-symbols-outlined text-[22px]">play_lesson</span>
+    </div>
+  </div>
+</div>
+{{ end }}

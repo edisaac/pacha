@@ -1,0 +1,10 @@
+{
+  "cla": {
+    "version": "1.0",
+    "document": "CLA.md",
+    "requireExplicitAgreement": true,
+    "allowList": [
+      "bot*-[bot]"
+    ]
+  }
+}

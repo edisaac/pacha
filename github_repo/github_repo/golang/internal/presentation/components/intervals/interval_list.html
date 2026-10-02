@@ -1,0 +1,73 @@
+{{ define "interval_list" }}
+<div class="border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-lowest" id="interval-list-container" hx-get="/planing/{{ .TaskID }}/details/intervals?mode=list"  hx-swap="outerHTML">
+  <div class="px-md py-sm bg-surface-container-low border-b border-outline-variant/30 flex justify-between items-center">
+     <h3 class="text-label-md font-label-md font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-primary">schedule</span>
+        Catálogo de Bloques Horarios
+     </h3>
+     <div class="flex items-center gap-2">
+       <input type="search" id="search-input-intervals" name="q" value="{{ .SearchQuery }}" placeholder="Buscar bloque..." 
+              class="text-sm px-3 py-1.5 rounded-lg border border-outline-variant/50 bg-surface text-on-surface focus:outline-none focus:border-primary w-48"
+              hx-get="/planing/{{ .TaskID }}/details/intervals?mode=list"
+              hx-target="#interval-list-container"
+              hx-trigger="keyup changed delay:500ms, search"
+              hx-swap="outerHTML">
+     </div>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse text-body-sm">
+      <thead>
+        <tr class="bg-surface-container-high/40 text-[11px] font-label-sm uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/20">
+            <th class="py-3 px-4 font-semibold">Día</th>
+            <th class="py-3 px-4 font-semibold">Inicio</th>
+            <th class="py-3 px-4 font-semibold">Fin</th>
+            <th class="py-3 px-4 font-semibold text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {{ range .Intervals }}
+        <tr class="hover:bg-surface-container-low transition-colors">
+            <td class="py-3 px-4 font-medium text-on-surface">{{ .NameOfDay }}</td>
+            <td class="py-3 px-4 font-label-sm text-[12px] font-semibold text-primary">{{ .StartTime }}</td>
+            <td class="py-3 px-4 font-label-sm text-[12px] font-semibold text-primary">{{ .EndTime }}</td>
+            <td class="py-3 px-4 text-right">
+              <div class="flex items-center justify-end gap-1">
+                <button hx-get="/planing/{{ $.TaskID }}/schedule/interval/{{ .ID }}"
+                        hx-target="#interval-schedule-target"
+                        hx-swap="innerHTML"
+                        class="p-1.5 text-primary hover:bg-surface-variant rounded transition-colors flex items-center gap-1 text-[12px] font-label-sm font-semibold"
+                        @click="
+                          intervalTab = 'schedule';
+                          document.getElementById('calendar-active-interval-name').innerText = '{{ .NameOfDay }} {{ .StartTime }} - {{ .EndTime }}'; 
+                        "
+                        title="Ver clases de este intervalo">
+                  <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+                  <span class="hidden lg:inline">Ver Clases</span>
+                </button>
+              </div>
+            </td>
+        </tr>
+        {{ else }}
+        <tr>
+          <td colspan="4" class="py-6 text-center text-on-surface-variant">No hay intervalos registrados.</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <div class="px-md py-sm border-t border-outline-variant/30 bg-surface flex justify-between items-center text-sm text-on-surface-variant">
+    <span>Mostrando {{ len .Intervals }} de {{ .TotalItems }} registros</span>
+    <div class="flex gap-2">
+      <button {{ if not .HasPrev }}disabled{{ end }}
+              hx-get="/planing/{{ .TaskID }}/details/intervals?mode=list&page={{ .PrevPage }}&q={{ .SearchQuery }}"
+              hx-target="#interval-list-container"
+              class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Anterior</button>
+      <span class="px-2 py-1 flex items-center">Página {{ .CurrentPage }} de {{ .TotalPages }}</span>
+      <button {{ if not .HasNext }}disabled{{ end }}
+              hx-get="/planing/{{ .TaskID }}/details/intervals?mode=list&page={{ .NextPage }}&q={{ .SearchQuery }}"
+              hx-target="#interval-list-container"
+              class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Siguiente</button>
+    </div>
+  </div>
+</div>
+{{ end }}
