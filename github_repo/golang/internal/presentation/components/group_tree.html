@@ -1,0 +1,27 @@
+{{ define "group_tree" }}
+    {{ $groups := .Groups }}
+    {{ $parentCod := .ParentCod }}
+    {{ $levelStr := .LevelStr }}
+    {{ $taskID := .TaskID }}
+    {{ $allGroups := .AllGroups }}
+    
+    {{ range $groups }}
+        {{ if eq .ParentCod $parentCod }}
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-3 py-2 text-gray-500 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <span class="text-gray-300 font-mono whitespace-pre">{{ $levelStr }}</span>
+                        {{ if ne $levelStr "" }}<span class="text-gray-300 mr-2">└─</span>{{ end }}
+                        {{ .ID }}
+                    </div>
+                </td>
+                <td class="px-3 py-2 text-gray-500">{{ .Cod }}</td>
+                <td class="px-3 py-2 text-gray-900" {{ if eq $levelStr "" }}style="font-weight: 600;"{{ end }}>{{ .Name }}</td>
+                <td class="px-3 py-2 text-gray-400 text-xs">
+                    <span>{{ if .ParentCod }}{{ .ParentCod }}{{ else }}-{{ end }}</span>
+                </td>
+            </tr>
+            {{ template "group_tree" dict "Groups" $groups "ParentCod" .Cod "LevelStr" (print $levelStr "    ") "TaskID" $taskID "AllGroups" $allGroups }}
+        {{ end }}
+    {{ end }}
+{{ end }}

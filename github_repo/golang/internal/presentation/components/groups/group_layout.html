@@ -1,0 +1,81 @@
+{{ define "group_layout" }}
+<div x-data="{ groupTab: 'list' }" class="bg-surface-container-lowest border border-outline-variant/20 shadow-sm rounded-xl p-md overflow-x-auto relative w-full" id="group-module-container">
+  <div class="flex flex-col gap-lg">
+    
+
+
+    <!-- Pestañas (Tabs) -->
+    <div class="flex items-center gap-2 border-b border-outline-variant/30 pb-3">
+       <button @click="groupTab = 'list'" 
+               :class="groupTab === 'list' ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-variant font-semibold'"
+               class="px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">school</span>
+          Listado de Secciones
+       </button>
+       <button @click="groupTab = 'calendar'" 
+               :class="groupTab === 'calendar' ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-variant font-semibold'"
+               class="px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+          Calendario Semanal
+       </button>
+    </div>
+
+    <!-- Contenido Tabs -->
+    <div class="relative min-h-[400px]">
+      
+      <!-- Tab: Listado -->
+      <div x-show="groupTab === 'list'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+        {{ template "group_list" . }}
+      </div>
+      
+      <!-- Tab: Calendario -->
+      <div x-show="groupTab === 'calendar'" style="display: none;" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+        <div class="flex flex-col gap-4" 
+             x-data="{
+                activeGroupId: null,
+                loadTopbar(groupId) {
+                    this.activeGroupId = groupId;
+                    htmx.ajax('GET', '/planing/{{ .TaskID }}/topbar/unassigned?group_id=' + groupId, {target: '#unassigned-topbar-container'});
+                }
+             }" 
+             @load-unassigned-topbar.window="loadTopbar($event.detail.groupId)"
+             @refreshgrid.window="if (activeGroupId) loadTopbar(activeGroupId)">
+
+          <!-- Top Bar de Sesiones Pendientes -->
+          <div id="unassigned-topbar-container" class="w-full">
+              <!-- El contenido del top bar se cargará aquí -->
+              <div class="bg-surface border border-outline-variant/30 rounded-xl p-4 text-center text-on-surface-variant flex items-center justify-center gap-3">
+                  <span class="material-symbols-outlined text-[24px] opacity-50">inbox</span>
+                  <p class="text-sm">Selecciona una sección para ver sus sesiones pendientes.</p>
+              </div>
+          </div>
+          
+          <!-- Calendario Principal -->
+          <div class="border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm flex-1" id="group-weekly-schedule-section">
+            <div class="px-md py-sm bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between gap-sm">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined">calendar_month</span>
+                </div>
+                <div>
+                  <h3 class="text-label-md font-label-md font-bold text-on-surface flex items-center gap-2">
+                    <span id="calendar-active-group-name">Seleccione una sección de la lista</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-label-sm font-semibold bg-surface-container-highest text-on-surface-variant" id="calendar-active-group-code">---</span>
+                  </h3>
+                </div>
+              </div>
+            </div>
+            
+            <div class="p-4" id="group-calendar-grid-target">
+              <div class="rounded-xl border-2 border-dashed border-gray-200 py-12 text-center text-sm text-gray-400">
+                Selecciona una sección de la tabla para ver su horario.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+{{ end }}
