@@ -1,0 +1,35 @@
+{{ define "teacher_subjects_modal" }}
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" x-data="{ open: true }" x-show="open">
+  <div class="bg-surface-container-lowest border border-outline-variant/30 shadow-xl rounded-xl w-full max-w-md overflow-hidden" @click.away="open = false">
+    <!-- Header -->
+    <div class="px-6 py-4 bg-surface-container-low border-b border-outline-variant/20 flex justify-between items-center">
+      <h3 class="text-label-lg font-bold text-on-surface">{{ .EntityTitle }}</h3>
+      <button @click="open = false" class="text-on-surface-variant hover:text-on-surface p-1 rounded-md hover:bg-surface-variant transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    
+    <!-- Body -->
+    <div class="p-6 max-h-[60vh] overflow-y-auto">
+      {{ if .Subjects }}
+        <ul class="space-y-2">
+          {{ range .Subjects }}
+          <li class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 bg-surface-container-lowest hover:bg-surface-container-low transition-colors">
+            <div class="w-8 h-8 rounded shrink-0 {{ .Pattern }}" style="background-color: {{ .Color }}"></div>
+            <div>
+              <p class="text-body-sm font-bold text-on-surface">{{ .Name }}</p>
+              <p class="text-label-sm text-on-surface-variant">Cód: {{ .Cod }}</p>
+            </div>
+          </li>
+          {{ end }}
+        </ul>
+      {{ else }}
+        <div class="py-8 text-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-4xl mb-2 opacity-50">menu_book</span>
+          <p class="text-body-sm">Este docente no tiene cursos habilitados.</p>
+        </div>
+      {{ end }}
+    </div>
+  </div>
+</div>
+{{ end }}
