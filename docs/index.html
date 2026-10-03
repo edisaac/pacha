@@ -1,17 +1,42 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="pacha">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Horarios - Fase Beta</title>
     <!-- Tailwind & DaisyUI via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <!-- Tailwind Configuration (Must be before CDN) -->
+    <script>
+        tailwind.config = {
+            daisyui: {
+                themes: [
+                    {
+                        pacha: {
+                            "primary": "#4648d4",
+                            "secondary": "#565e74",
+                            "accent": "#6063ee",
+                            "neutral": "#233144",
+                            "base-100": "#f8f9ff",
+                            "base-200": "#e6eeff",
+                            "base-300": "#d5e3fc",
+                            "base-content": "#0d1c2e",
+                            "info": "#3b82f6",
+                            "success": "#22c55e",
+                            "warning": "#f59e0b",
+                            "error": "#ba1a1a",
+                        },
+                    },
+                ],
+            },
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .gradient-text {
-            background: linear-gradient(to right, #4ade80, #3b82f6);
+            background: linear-gradient(to right, #4648d4, #6063ee);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -32,10 +57,10 @@
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center mt-4">
                     <a id="btn-win" href="#" class="btn btn-primary btn-lg shadow-lg gap-2">
-                        <i data-lucide="monitor"></i> Descargar para Windows (.exe)
+                        <i data-lucide="monitor"></i> Descargar para Windows (.zip)
                     </a>
                     <a id="btn-lin" href="#" class="btn btn-secondary btn-lg shadow-lg gap-2">
-                        <i data-lucide="terminal"></i> Descargar para Linux (amd64)
+                        <i data-lucide="terminal"></i> Instrucciones para Linux
                     </a>
                 </div>
                 <p id="release-info" class="mt-4 text-sm text-base-content/60">Buscando última versión...</p>
@@ -49,22 +74,56 @@
             <!-- Hard Constraints -->
             <div class="card bg-base-100 shadow-xl border-t-4 border-error hover:-translate-y-2 transition-transform duration-300">
                 <div class="card-body">
-                    <h2 class="card-title gap-2">
+                    <h2 class="card-title gap-2 mb-4">
                         <i data-lucide="shield-alert" class="text-error"></i>
-                        Restricciones Duras
+                        Reglas Duras (Inquebrantables)
                     </h2>
-                    <p class="text-base-content/80">Evita colisiones físicas y lógicas. Garantiza que un profesor no dé dos clases a la vez, se respeten las capacidades de las aulas y las mallas curriculares no tengan solapamientos.</p>
+                    <ul class="space-y-3 text-base-content/80 text-sm">
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="door-closed" class="w-5 h-5 text-error shrink-0 mt-0.5"></i>
+                            <span><b>Choques de Aula:</b> Un aula no puede tener dos clases al mismo tiempo.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="users" class="w-5 h-5 text-error shrink-0 mt-0.5"></i>
+                            <span><b>Choques de Profesor:</b> Un profesor no puede dictar dos clases simultáneas.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="network" class="w-5 h-5 text-error shrink-0 mt-0.5"></i>
+                            <span><b>Jerarquía de Grupos:</b> Evita solapamientos entre grupos y subgrupos.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="user-check" class="w-5 h-5 text-error shrink-0 mt-0.5"></i>
+                            <span><b>Consistencia:</b> Un mismo grupo y materia siempre tendrán el mismo profesor.</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
             
             <!-- Soft Constraints -->
             <div class="card bg-base-100 shadow-xl border-t-4 border-success hover:-translate-y-2 transition-transform duration-300">
                 <div class="card-body">
-                    <h2 class="card-title gap-2">
+                    <h2 class="card-title gap-2 mb-4">
                         <i data-lucide="target" class="text-success"></i>
-                        Optimización Blanda
+                        Reglas Blandas (Optimización)
                     </h2>
-                    <p class="text-base-content/80">Maximiza la calidad del horario. Minimiza los huecos para profesores, asigna aulas preferidas según la materia y balancea la carga diaria de los estudiantes.</p>
+                    <ul class="space-y-3 text-base-content/80 text-sm">
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="timer" class="w-5 h-5 text-success shrink-0 mt-0.5"></i>
+                            <span><b>Eficiencia de Tiempo:</b> Minimiza horas huecas para profesores y alumnos.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="shuffle" class="w-5 h-5 text-success shrink-0 mt-0.5"></i>
+                            <span><b>Variedad:</b> Distribuye materias equitativamente en los días de la semana.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-success shrink-0 mt-0.5"></i>
+                            <span><b>Estabilidad de Aulas:</b> Minimiza el desplazamiento del profesor entre aulas.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="calendar-off" class="w-5 h-5 text-success shrink-0 mt-0.5"></i>
+                            <span><b>Horarios Preferidos:</b> Penaliza la asignación de clases en fines de semana.</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
@@ -90,7 +149,7 @@
                 </div>
                 <h3 class="text-3xl font-bold mb-4">¿Necesitas reglas horarias personalizadas?</h3>
                 <p class="mb-8 text-base-content/70">Las instituciones tienen necesidades únicas. Si requieres restricciones específicas para tu caso (ej. coordinadores con horarios especiales, rotación de laboratorios), abre un ticket detallando tu escenario.</p>
-                <a href="https://github.com/OWNER_PLACEHOLDER/REPO_PLACEHOLDER/issues/new/choose" target="_blank" class="btn btn-outline btn-primary btn-lg gap-2 w-full sm:w-auto">
+                <a href="https://github.com/edisaac/pacha/issues/new/choose" target="_blank" class="btn btn-outline btn-primary btn-lg gap-2 w-full sm:w-auto">
                     <i data-lucide="github"></i> Solicitar Nueva Regla
                 </a>
             </div>
@@ -116,8 +175,8 @@
         lucide.createIcons();
 
         // Configuración - Reemplazar con datos reales
-        const owner = 'OWNER_PLACEHOLDER';
-        const repo = 'REPO_PLACEHOLDER';
+        const owner = 'edisaac';
+        const repo = 'pacha';
         const fallbackUrl = `https://github.com/${owner}/${repo}/releases/latest`;
         
         async function fetchLatestRelease() {
@@ -135,11 +194,12 @@
                 const data = await response.json();
                 
                 let winUrl = fallbackUrl;
-                let linUrl = fallbackUrl;
+                let linUrl = `https://github.com/${owner}/${repo}#4-compilaci%C3%B3n-del-ejecutable-desktop-en-linux-local`;
 
                 data.assets.forEach(asset => {
-                    if (asset.name.endsWith('.exe')) winUrl = asset.browser_download_url;
-                    if (asset.name.includes('amd64') && !asset.name.endsWith('.exe')) linUrl = asset.browser_download_url;
+                    if (asset.name.endsWith('.zip') && asset.name.includes('Windows')) {
+                        winUrl = asset.browser_download_url;
+                    }
                 });
 
                 document.getElementById('btn-win').href = winUrl;

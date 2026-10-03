@@ -17,7 +17,7 @@
                  :class="intervalTab === 'ocupabilidad' ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-variant font-semibold'"
                  class="px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">insert_chart</span>
-            Ocupabilidad
+            Estado Global
          </button>
          <button @click="intervalTab = 'schedule'" 
                  :class="intervalTab === 'schedule' ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-variant font-semibold'"
@@ -36,18 +36,45 @@
         {{ template "interval_list" . }}
       </div>
       
-      <!-- Tab: Ocupabilidad -->
+      <!-- Tab: Estado Global -->
       <div x-show="intervalTab === 'ocupabilidad'" style="display: none;" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-        <div class="flex justify-end mb-3 mt-1">
-           <div x-data="{ time: new Date().toLocaleTimeString() }" class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary shadow-sm" title="Actualizado a esta hora (Usa el botón Recargar Tablas para forzar actualización)">
-             <svg class="h-3.5 w-3.5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-             </svg>
-             <span x-text="'Actualizado: ' + time"></span>
+        <div id="interval-unassigned-topbar-container" class="w-full mb-4" hx-get="/planing/{{ .TaskID }}/topbar/unassigned?page=1" hx-trigger="load">
+           <div class="bg-surface border border-outline-variant/30 rounded-xl p-4 text-center text-on-surface-variant flex items-center justify-center gap-3">
+               <span class="material-symbols-outlined text-[24px] animate-spin">sync</span>
+               <p class="text-sm">Cargando sesiones pendientes...</p>
            </div>
         </div>
-        <div id="ocupabilidad-container" hx-get="/planing/{{ .TaskID }}/ocupabilidad" hx-trigger="load, refreshgrid from:body" hx-swap="innerHTML">
-          <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando ocupabilidad…</div>
+        <div id="interval-conflict-topbar-container" class="w-full mb-4" hx-get="/planing/{{ .TaskID }}/topbar/conflict?page=1" hx-trigger="load">
+           <div class="bg-surface border border-outline-variant/30 rounded-xl p-4 text-center text-on-surface-variant flex items-center justify-center gap-3">
+               <span class="material-symbols-outlined text-[24px] animate-spin">sync</span>
+               <p class="text-sm">Cargando sesiones con conflictos...</p>
+           </div>
+        </div>
+
+        <div class="border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm">
+          <div class="px-md py-sm bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between gap-sm">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined">insert_chart</span>
+              </div>
+              <div>
+                <h3 class="text-label-md font-label-md font-bold text-on-surface flex items-center gap-2">
+                  <span>Cuadrícula de Ocupabilidad</span>
+                </h3>
+              </div>
+            </div>
+            <div class="flex justify-end">
+               <div x-data="{ time: new Date().toLocaleTimeString() }" class="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary shadow-sm" title="Actualizado a esta hora (Usa el botón Recargar Tablas para forzar actualización)">
+                 <svg class="h-3.5 w-3.5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>
+                 <span x-text="'Actualizado: ' + time"></span>
+               </div>
+            </div>
+          </div>
+          <div id="ocupabilidad-container" hx-get="/planing/{{ .TaskID }}/ocupabilidad" hx-trigger="load, refreshgrid from:body" hx-swap="innerHTML">
+            <div class="py-10 text-center text-sm text-gray-400 animate-pulse">Cargando ocupabilidad…</div>
+          </div>
         </div>
       </div>
       

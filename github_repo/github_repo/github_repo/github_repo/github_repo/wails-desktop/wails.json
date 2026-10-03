@@ -1,0 +1,17 @@
+{
+  "name": "HorariosDesktop",
+  "outputfilename": "HorariosDesktop",
+  "frontend:install": "",
+  "frontend:build": "",
+  "frontend:dir": "frontend",
+  "author": {
+    "name": "Timefold Horarios Team"
+  },
+  "info": {
+    "companyName": "Timefold",
+    "productName": "Horarios Desktop",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright 2026",
+    "comments": "Sistema Integrado de Resolución y Optimización de Horarios"
+  }
+}

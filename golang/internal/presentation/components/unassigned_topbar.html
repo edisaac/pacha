@@ -1,7 +1,9 @@
 {{ define "unassigned_topbar" }}
 <div id="unassigned-topbar" class="bg-surface border border-outline-variant/30 rounded-xl flex flex-col overflow-hidden transition-all duration-300" 
-     x-data="{ isOpen: sessionStorage.getItem('pendingSessionsOpen') === 'true' }"
-     x-init="$nextTick(() => { if ($refs.scrollContainer) $refs.scrollContainer.scrollLeft = sessionStorage.getItem('pendingScroll') || 0 })">
+     hx-get="/planing/{{ .TaskID }}/topbar/unassigned?page={{ .CurrentPage }}{{ if .GroupID }}&group_id={{ .GroupID }}{{ end }}{{ if .TeacherID }}&teacher_id={{ .TeacherID }}{{ end }}{{ if .RoomID }}&room_id={{ .RoomID }}{{ end }}"
+     hx-trigger="refreshgrid from:body"
+     hx-swap="outerHTML"
+     x-data="{ isOpen: sessionStorage.getItem('pendingSessionsOpen') === 'true' }">
     <div class="px-4 py-3 bg-surface-container border-b border-outline-variant/30 flex justify-between items-center cursor-pointer hover:bg-surface-container-highest transition-colors" @click="isOpen = !isOpen; sessionStorage.setItem('pendingSessionsOpen', isOpen)">
         <div class="flex items-center gap-3">
             <div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
@@ -12,17 +14,17 @@
                     Sesiones Pendientes
                 </h3>
                 <p class="text-body-sm text-on-surface-variant m-0 mt-0.5">
-                    {{ if eq (len .Lessons) 0 }}
+                    {{ if eq .TotalItems 0 }}
                         No hay sesiones por asignar
                     {{ else }}
-                        Faltan <span class="font-bold text-error">{{ len .Lessons }}</span> por asignar
+                        Faltan <span class="font-bold text-error">{{ .TotalItems }}</span> por asignar
                     {{ end }}
                 </p>
             </div>
         </div>
         
         <div class="flex items-center gap-2">
-            {{ if gt (len .Lessons) 0 }}
+            {{ if gt .TotalItems 0 }}
             <button class="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
                     :class="isOpen ? 'bg-primary text-on-primary' : 'bg-surface-variant text-on-surface-variant hover:bg-primary/20'"
                     @click.stop="isOpen = !isOpen; sessionStorage.setItem('pendingSessionsOpen', isOpen)">
@@ -42,12 +44,10 @@
          x-transition:leave-end="opacity-0 -translate-y-2"
          class="border-t border-outline-variant/30 origin-top"
          style="display: none;">
-        <div x-ref="scrollContainer" 
-             @scroll.debounce.100ms="sessionStorage.setItem('pendingScroll', $event.target.scrollLeft)"
-             class="flex overflow-x-auto p-4 bg-surface-container-lowest gap-4">
+        <div class="flex flex-wrap p-4 bg-surface-container-lowest gap-4">
             {{ if eq (len .Lessons) 0 }}
             <div class="w-full text-center text-sm text-on-surface-variant italic py-2">
-                No hay sesiones pendientes para este filtro.
+                No hay sesiones pendientes en esta página.
             </div>
             {{ else }}
             {{ range .Lessons }}
@@ -93,6 +93,24 @@
             {{ end }}
             {{ end }}
         </div>
+        {{ if gt .TotalPages 1 }}
+        <div class="px-md py-sm border-t border-outline-variant/30 bg-surface flex justify-between items-center text-sm text-on-surface-variant">
+            <span>Mostrando {{ len .Lessons }} de {{ .TotalItems }} registros</span>
+            <div class="flex gap-2">
+                <button {{ if not .HasPrev }}disabled{{ end }}
+                        hx-get="/planing/{{ .TaskID }}/topbar/unassigned?page={{ .PrevPage }}{{ if .GroupID }}&group_id={{ .GroupID }}{{ end }}{{ if .TeacherID }}&teacher_id={{ .TeacherID }}{{ end }}{{ if .RoomID }}&room_id={{ .RoomID }}{{ end }}"
+                        hx-target="#unassigned-topbar"
+                        hx-swap="outerHTML"
+                        class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Anterior</button>
+                <span class="px-2 py-1 flex items-center">Página {{ .CurrentPage }} de {{ .TotalPages }}</span>
+                <button {{ if not .HasNext }}disabled{{ end }}
+                        hx-get="/planing/{{ .TaskID }}/topbar/unassigned?page={{ .NextPage }}{{ if .GroupID }}&group_id={{ .GroupID }}{{ end }}{{ if .TeacherID }}&teacher_id={{ .TeacherID }}{{ end }}{{ if .RoomID }}&room_id={{ .RoomID }}{{ end }}"
+                        hx-target="#unassigned-topbar"
+                        hx-swap="outerHTML"
+                        class="px-3 py-1 bg-surface-container-high rounded disabled:opacity-50 hover:bg-surface-variant">Siguiente</button>
+            </div>
+        </div>
+        {{ end }}
     </div>
 </div>
 {{ end }}

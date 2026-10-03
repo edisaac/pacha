@@ -112,6 +112,8 @@ func main() {
 			handlers.HandleLessonAction(DBDir)(w, r)
 		case strings.Contains(path, "/topbar/unassigned"):
 			handlers.HandleTopbarUnassigned(DBDir)(w, r)
+		case strings.Contains(path, "/topbar/conflict"):
+			handlers.HandleTopbarConflict(DBDir)(w, r)
 		case strings.Contains(path, "/pin-entity/"):
 			handlers.HandlePinEntityAction(DBDir)(w, r)
 		default:

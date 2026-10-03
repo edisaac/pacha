@@ -632,11 +632,12 @@ func GetLessonsDetailPaginated(db *sql.DB, filter models.LessonFilter, limit, of
 	var total int
 	isUnassignedSearch := filter.Search == ":unassigned" || filter.Search == "pending" || filter.Search == "sin asignar" || filter.Status == "unassigned"
 	isAssignedSearch := filter.Status == "assigned"
+	isConflictSearch := filter.Status == "conflict"
 
 	whereClauses := []string{}
 	args := []interface{}{}
 
-	if filter.Search != "" && !isUnassignedSearch && !isAssignedSearch {
+	if filter.Search != "" && !isUnassignedSearch && !isAssignedSearch && !isConflictSearch {
 		whereClauses = append(whereClauses, "(IFNULL(s.name, '') LIKE ? OR IFNULL(t.name, '') LIKE ? OR IFNULL(sg.name, '') LIKE ? OR IFNULL(r.name, '') LIKE ?)")
 		args = append(args, "%"+filter.Search+"%", "%"+filter.Search+"%", "%"+filter.Search+"%", "%"+filter.Search+"%")
 	}
@@ -645,6 +646,8 @@ func GetLessonsDetailPaginated(db *sql.DB, filter models.LessonFilter, limit, of
 		whereClauses = append(whereClauses, "(l.timeslot_id IS NULL OR l.room_id IS NULL OR l.teacher_id IS NULL)")
 	} else if isAssignedSearch {
 		whereClauses = append(whereClauses, "(l.timeslot_id IS NOT NULL AND l.room_id IS NOT NULL AND l.teacher_id IS NOT NULL)")
+	} else if isConflictSearch {
+		whereClauses = append(whereClauses, "l.id IN (SELECT lesson_id FROM v_lesson_conflict)")
 	}
 
 	if filter.SubjectID != "" {

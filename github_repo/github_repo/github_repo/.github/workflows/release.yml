@@ -20,10 +20,12 @@ jobs:
             platform: linux/amd64
             artifact_name: Horarios-Linux-amd64
             ext: ""
+            build_tags: "-tags webkit2_41"
           - os: windows-latest
             platform: windows/amd64
             artifact_name: Horarios-Windows-amd64
             ext: ".exe"
+            build_tags: ""
         
     steps:
       - name: Checkout Code
@@ -62,7 +64,7 @@ jobs:
       - name: Build Wails App
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
-          wails build -platform ${{ matrix.platform }} -clean
+          wails build -platform ${{ matrix.platform }} ${{ matrix.build_tags }} -clean
         working-directory: ./wails-desktop
 
       - name: Upload Artifacts

@@ -356,29 +356,132 @@ func HandleTopbarUnassigned(dbDir string) http.HandlerFunc {
 		}
 		defer db.Close()
 
+		pageStr := r.URL.Query().Get("page")
+		page := 1
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+		limit := 12
+		offset := (page - 1) * limit
+
 		filter := models.LessonFilter{Status: "unassigned"}
-		if groupID := r.URL.Query().Get("group_id"); groupID != "" {
+		groupID := r.URL.Query().Get("group_id")
+		if groupID != "" {
 			filter.GroupID = groupID
 		}
-		if teacherID := r.URL.Query().Get("teacher_id"); teacherID != "" {
+		teacherID := r.URL.Query().Get("teacher_id")
+		if teacherID != "" {
 			filter.TeacherID = teacherID
 		}
-		if roomID := r.URL.Query().Get("room_id"); roomID != "" {
+		roomID := r.URL.Query().Get("room_id")
+		if roomID != "" {
 			filter.RoomID = roomID
 		}
 
-		lessons, _, err := repository.GetLessonsDetailPaginated(db, filter, 1000, 0)
+		lessons, totalItems, err := repository.GetLessonsDetailPaginated(db, filter, limit, offset)
 		if err != nil {
 			http.Error(w, "Error fetching unassigned lessons", http.StatusInternalServerError)
 			return
 		}
 
+		totalPages := (totalItems + limit - 1) / limit
+		if totalPages == 0 {
+			totalPages = 1
+		}
+		if page > totalPages {
+			page = totalPages
+		}
+
 		data := map[string]interface{}{
-			"TaskID":  taskID,
-			"Lessons": lessons,
+			"TaskID":      taskID,
+			"Lessons":     lessons,
+			"CurrentPage": page,
+			"TotalPages":  totalPages,
+			"HasNext":     page < totalPages,
+			"HasPrev":     page > 1,
+			"NextPage":    page + 1,
+			"PrevPage":    page - 1,
+			"TotalItems":  totalItems,
+			"GroupID":     groupID,
+			"TeacherID":   teacherID,
+			"RoomID":      roomID,
 		}
 
 		RenderTemplate(w, "unassigned_topbar", "internal/presentation/components/unassigned_topbar.html", data)
+	}
+}
+
+// ── HandleTopbarConflict ─────────────────────────────────────────────────────
+
+func HandleTopbarConflict(dbDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/planing/"), "/")
+		if len(parts) < 2 {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+		taskID := parts[0]
+
+		dbPath := filepath.Join(dbDir, taskID+".db") + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)"
+		db, err := sql.Open("sqlite", dbPath)
+		if err != nil {
+			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		pageStr := r.URL.Query().Get("page")
+		page := 1
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+		limit := 12
+		offset := (page - 1) * limit
+
+		filter := models.LessonFilter{Status: "conflict"}
+		groupID := r.URL.Query().Get("group_id")
+		if groupID != "" {
+			filter.GroupID = groupID
+		}
+		teacherID := r.URL.Query().Get("teacher_id")
+		if teacherID != "" {
+			filter.TeacherID = teacherID
+		}
+		roomID := r.URL.Query().Get("room_id")
+		if roomID != "" {
+			filter.RoomID = roomID
+		}
+
+		lessons, totalItems, err := repository.GetLessonsDetailPaginated(db, filter, limit, offset)
+		if err != nil {
+			http.Error(w, "Error fetching conflicting lessons", http.StatusInternalServerError)
+			return
+		}
+
+		totalPages := (totalItems + limit - 1) / limit
+		if totalPages == 0 {
+			totalPages = 1
+		}
+		if page > totalPages {
+			page = totalPages
+		}
+
+		data := map[string]interface{}{
+			"TaskID":      taskID,
+			"Lessons":     lessons,
+			"CurrentPage": page,
+			"TotalPages":  totalPages,
+			"HasNext":     page < totalPages,
+			"HasPrev":     page > 1,
+			"NextPage":    page + 1,
+			"PrevPage":    page - 1,
+			"TotalItems":  totalItems,
+			"GroupID":     groupID,
+			"TeacherID":   teacherID,
+			"RoomID":      roomID,
+		}
+
+		RenderTemplate(w, "conflict_topbar", "internal/presentation/components/conflict_topbar.html", data)
 	}
 }
 

@@ -1,0 +1,115 @@
+{{ define "add_lesson_modal" }}
+<div class="modal-overlay" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="modal-content max-w-lg" @click.away="document.getElementById('modal-container').innerHTML = ''">
+        <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+            <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-container').innerHTML = ''">
+                <span class="sr-only">Cerrar</span>
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="sm:flex sm:items-start">
+            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                <h3 class="text-lg font-semibold leading-6 text-gray-900 flex items-center gap-2" id="modal-title">
+                    <span class="material-symbols-outlined text-primary">edit_calendar</span>
+                    Asignar Sesión Pendiente
+                </h3>
+                
+                {{ if eq (len .PendingLessons) 0 }}
+                <div class="mt-4 text-sm text-gray-500 mb-4 bg-yellow-50 p-3 rounded-md border border-yellow-200">
+                    No hay sesiones pendientes para asignar a este grupo/entidad.
+                </div>
+                <div class="mt-6 sm:flex sm:flex-row-reverse border-t border-gray-200 pt-4">
+                    <button type="button" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto transition-colors" onclick="document.getElementById('modal-container').innerHTML = ''">
+                        Cerrar
+                    </button>
+                </div>
+                {{ else }}
+
+                <div id="modal-error-message"></div>
+
+                <form id="edit-lesson-form" 
+                      hx-post="/planing/{{ .TaskID }}/lesson/{{ .SelectedLessonID }}/update" 
+                      hx-swap="none"
+                      class="space-y-4">
+                    
+                    <!-- Selector de Sesión Pendiente -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sesión a Asignar</label>
+                        <select name="selected_lesson_id" 
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
+                                hx-get="/planing/{{ .TaskID }}/lesson/add-modal?timeslot_id={{ .TimeslotID }}&entity_type={{ .EntityType }}&entity_id={{ .EntityID }}"
+                                hx-target="#modal-container"
+                                hx-swap="outerHTML">
+                            {{ range .PendingLessons }}
+                            <option value="{{ .ID }}" {{ if eq .ID $.SelectedLessonID }}selected{{ end }}>
+                                {{ .Subject }} - {{ .Teacher }} - {{ .Group }}
+                            </option>
+                            {{ end }}
+                        </select>
+                    </div>
+
+                    <!-- Bloque Horario -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Día y Hora</label>
+                        <select name="timeslot_id" 
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
+                                hx-get="/planing/{{ .TaskID }}/lesson/add-modal?lesson_id={{ .SelectedLessonID }}&entity_type={{ .EntityType }}&entity_id={{ .EntityID }}"
+                                hx-target="#modal-container"
+                                hx-swap="outerHTML">
+                            <option value="0">-- Pendiente (Sin asignar) --</option>
+                            {{ range .Lesson.Timeslots }}
+                            <option value="{{ .ID }}" {{ if .IsCurrent }}selected="selected"{{ end }}>{{ .NameOfDay }} {{ .StartTime }}-{{ .EndTime }}</option>
+                            {{ end }}
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Selecciona el bloque para filtrar docentes y aulas disponibles.</p>
+                    </div>
+
+                    <!-- Docente -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Docente</label>
+                        <select name="teacher_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                            <option value="0">-- Pendiente (Sin asignar) --</option>
+                            {{ range .Lesson.Teachers }}
+                            <option value="{{ .ID }}" {{ if .IsCurrent }}selected{{ end }}>
+                                {{ .Name }}
+                            </option>
+                            {{ end }}
+                        </select>
+                        {{ if eq (len .Lesson.Teachers) 0 }}
+                        <p class="mt-1 text-xs text-red-500 font-medium">No hay docentes libres a esta hora que puedan dictar el curso.</p>
+                        {{ end }}
+                    </div>
+
+                    <!-- Aula -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Aula</label>
+                        <select name="room_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                            <option value="0">-- Pendiente (Sin asignar) --</option>
+                            {{ range .Lesson.Rooms }}
+                            <option value="{{ .ID }}" {{ if .IsCurrent }}selected{{ end }}>
+                                {{ .Name }}
+                            </option>
+                            {{ end }}
+                        </select>
+                        {{ if eq (len .Lesson.Rooms) 0 }}
+                        <p class="mt-1 text-xs text-red-500 font-medium">No hay aulas libres a esta hora.</p>
+                        {{ end }}
+                    </div>
+
+                    <div class="mt-6 sm:flex sm:flex-row-reverse border-t border-gray-200 pt-4">
+                        <button type="submit" class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 sm:ml-3 sm:w-auto transition-colors">
+                            Guardar Asignación
+                        </button>
+                        <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-colors" onclick="document.getElementById('modal-container').innerHTML = ''">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}

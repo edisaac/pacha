@@ -1,0 +1,122 @@
+{{ define "schedule_grid" }}
+<div class="animate-fade-in">
+  {{ if not .TimeGroups }}
+  <div class="mt-4 rounded-xl border-2 border-dashed border-gray-200 py-12 text-center text-sm text-gray-400">
+    No hay sesiones asignadas todavía.
+  </div>
+  {{ else }}
+  <div class="overflow-x-auto rounded-xl ring-1 ring-gray-200 mt-2">
+    <table class="table-grid">
+      <thead class="table-grid-header">
+        <tr>
+          <th class="table-grid-th-left">Hora</th>
+          {{ range .Days }}
+          <th class="table-grid-th-center">{{ .Name }}</th>
+          {{ end }}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {{ range .TimeGroups }}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="table-grid-td-time">
+            {{ .TimeRange }}
+          </td>
+          {{ $tg := . }}
+          {{ range $.Days }}
+          {{ $lessons := index $tg.Days .DayOfWeek }}
+          {{ $cellConflict := and $lessons (index $lessons 0).HasConflict }}
+          <td class="table-grid-td-cell align-top p-1.5">
+            {{ if $lessons }}
+            <div class="flex flex-col gap-1 w-full h-full min-w-[100px]">
+              {{ range $lessons }}
+              <div x-data="{ hover: false, pos: { top: 0, left: 0 }, activeBlock: false }"
+                   @mouseenter="
+                     const rect = $el.getBoundingClientRect();
+                     pos = { top: (rect.top - 8) + 'px', left: (rect.left + rect.width / 2) + 'px' };
+                     hover = true;
+                     $dispatch('block-hover', '{{ .BlockID }}');
+                   "
+                   @mouseleave="hover = false; $dispatch('block-hover', null);"
+                   @block-hover.window="activeBlock = ($event.detail === '{{ .BlockID }}')"
+                   class="relative w-full rounded border px-1 py-0.5 shadow-sm cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md {{ .Pattern }} {{ if .HasConflict }}border-red-500 bg-red-50 ring-1 ring-red-500{{ else }}border-black/15{{ end }}"
+                   :class="activeBlock ? 'ring-2 ring-primary border-primary z-10' : ''"
+                   style="{{ if not .HasConflict }}background-color: {{ .BgColor }};{{ end }}">
+                   
+                   <div class="flex items-center justify-between overflow-hidden">
+                     <span class="text-[10px] font-bold truncate mix-blend-color-burn" style="color: rgba(0,0,0,0.75);">{{ .Subject }}</span>
+                     {{ if .HasConflict }}
+                       <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 ml-1 animate-pulse"></span>
+                     {{ end }}
+                   </div>
+
+                <!-- On Hover Detail Card -->
+                <template x-teleport="body">
+                  <div x-show="hover"
+                       x-transition:enter="transition ease-out duration-100"
+                       x-transition:enter-start="opacity-0 scale-95"
+                       x-transition:enter-end="opacity-100 scale-100"
+                       x-transition:leave="transition ease-in duration-75"
+                       x-transition:leave-start="opacity-100 scale-100"
+                       x-transition:leave-end="opacity-0 scale-95"
+                       class="tooltip-card"
+                       :style="`top: ${pos.top}; left: ${pos.left};`"
+                       style="display: none;">
+                    
+                    {{ if .HasConflict }}
+                    <div class="flex flex-wrap gap-1 mb-1.5">
+                      {{ if .Conflicts.Group }}
+                      <div class="badge-conflict-soft" title="Conflicto de grupo">
+                        <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Grupo
+                      </div>
+                      {{ end }}
+                      {{ if .Conflicts.Room }}
+                      <div class="badge-conflict-soft" title="Conflicto de aula">
+                        <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Aula
+                      </div>
+                      {{ end }}
+                      {{ if .Conflicts.Teacher }}
+                      <div class="badge-conflict-soft" title="Conflicto de docente">
+                        <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        Doc.
+                      </div>
+                      {{ end }}
+                    </div>
+                    {{ end }}
+                    
+                    <div class="font-bold text-sm leading-tight text-gray-900 mb-2 flex items-start gap-2 border-b border-gray-100 pb-1.5">
+                      <span class="w-3.5 h-3.5 rounded shrink-0 mt-0.5 border border-black/15 {{ .Pattern }}" style="background-color: {{ .BgColor }};"></span>
+                      <span>{{ .Subject }}</span>
+                    </div>
+                    
+                    <div class="space-y-1.5 text-xs text-gray-600 font-medium">
+                      <div class="flex items-center gap-2">
+                        <svg class="h-3.5 w-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span class="truncate" title="{{ .Teacher }}">{{ .Teacher }}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <svg class="h-3.5 w-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span class="truncate" title="{{ .Room }}">{{ .Room }}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <svg class="h-3.5 w-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span class="truncate" title="{{ .Group }}">{{ .Group }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              {{ end }}
+            </div>
+            {{ end }}
+          </td>
+          {{ end }}
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

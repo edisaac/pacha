@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug API",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/golang/cmd/api",
+      "env": {
+        "GO111MODULE": "on",
+        "AWS_PROFILE": "sso-hor",
+        "AWS_REGION":"us-east-1",
+        "DYNAMODB_TABLE_NAME":"SchoolTimetable-dev",
+        "MIGRATION_PROBLEM_ID":"2025-FALL",
+        "KOTLIN_SERVICE_URL":"http://localhost:8082",
+
+      },
+      "args": []
+    }
+  ]
+}

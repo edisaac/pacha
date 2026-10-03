@@ -1,0 +1,14 @@
+{{ define "lesson_layout" }}
+<div class="bg-surface-container-lowest border border-outline-variant/20 shadow-sm rounded-xl p-md overflow-x-auto relative w-full" id="lesson-module-container">
+  <div class="flex flex-col gap-lg">
+    
+
+
+    <!-- Listado -->
+    <div class="relative min-h-[400px]">
+      {{ template "lesson_list" . }}
+    </div>
+    
+  </div>
+</div>
+{{ end }}
